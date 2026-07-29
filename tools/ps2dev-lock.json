@@ -1,0 +1,90 @@
+{
+  "schema": 1,
+  "snapshot": "2026-07-27",
+  "toolchains": {
+    "linux": {
+      "url": "https://github.com/ps2dev/ps2dev/releases/download/latest/ps2dev-ubuntu-latest.tar.gz",
+      "sha256": "6167c3e736f37e255a1caedac9869f91ec52a7ca656aca91b1f585c35bb11bd9",
+      "archive": "ps2dev-ubuntu-latest.tar.gz"
+    },
+    "windows": {
+      "url": "https://github.com/ps2dev/ps2dev/releases/download/latest/ps2dev-windows-latest.tar.gz",
+      "sha256": "7065f9525204ec2bcc432573c4ce49c24c8eee926d0369bd76bf7a957d34c316",
+      "archive": "ps2dev-windows-latest.tar.gz"
+    }
+  },
+  "windows_runtime": [
+    {
+      "name": "gcc-libs",
+      "url": "https://mirror.msys2.org/mingw/mingw32/mingw-w64-i686-gcc-libs-16.1.0-5-any.pkg.tar.zst",
+      "sha256": "cdf1886b5f88100748b7abd94a007168f7ab90f40cba75757535263777263b65",
+      "archive": "gcc-libs.pkg.tar.zst",
+      "members": [
+        "mingw32/bin/libgcc_s_dw2-1.dll"
+      ]
+    },
+    {
+      "name": "gmp",
+      "url": "https://mirror.msys2.org/mingw/mingw32/mingw-w64-i686-gmp-6.3.0-2-any.pkg.tar.zst",
+      "sha256": "cb23f87b33c20ae2de9638145a56bffdddf01a2afce2cb6dc43753d4e27bc448",
+      "archive": "gmp.pkg.tar.zst",
+      "members": [
+        "mingw32/bin/libgmp-10.dll"
+      ]
+    },
+    {
+      "name": "libiconv",
+      "url": "https://mirror.msys2.org/mingw/mingw32/mingw-w64-i686-libiconv-1.19-1-any.pkg.tar.zst",
+      "sha256": "12307416cfe45b6fbe1fb29c28594590bb59883856edf41b043d0daf684e4668",
+      "archive": "libiconv.pkg.tar.zst",
+      "members": [
+        "mingw32/bin/libiconv-2.dll"
+      ]
+    },
+    {
+      "name": "isl",
+      "url": "https://mirror.msys2.org/mingw/mingw32/mingw-w64-i686-isl-0.28-1-any.pkg.tar.zst",
+      "sha256": "df526ad433d959e5910e0f49f0343c61c992d5e8a7b28e27ca2bd8ffdf07304c",
+      "archive": "isl.pkg.tar.zst",
+      "members": [
+        "mingw32/bin/libisl-23.dll"
+      ]
+    },
+    {
+      "name": "mpc",
+      "url": "https://mirror.msys2.org/mingw/mingw32/mingw-w64-i686-mpc-1.4.1-1-any.pkg.tar.zst",
+      "sha256": "200e0a7612c2b667507a03d08b51f45e12db8bfc076fd5185f7c58f2c8a9acde",
+      "archive": "mpc.pkg.tar.zst",
+      "members": [
+        "mingw32/bin/libmpc-3.dll"
+      ]
+    },
+    {
+      "name": "mpfr",
+      "url": "https://mirror.msys2.org/mingw/mingw32/mingw-w64-i686-mpfr-4.2.2-3-any.pkg.tar.zst",
+      "sha256": "87cd116c4e4deb2fe89b713c58e6c123c0b415ffff97d13ab2465bbca316c33c",
+      "archive": "mpfr.pkg.tar.zst",
+      "members": [
+        "mingw32/bin/libmpfr-6.dll"
+      ]
+    },
+    {
+      "name": "libwinpthread",
+      "url": "https://mirror.msys2.org/mingw/mingw32/mingw-w64-i686-libwinpthread-14.0.0.r220.gd999af622-1-any.pkg.tar.zst",
+      "sha256": "6db5742ae30a5faaee3f6391898287df38b2542997064f6d45d22862b7a83d59",
+      "archive": "libwinpthread.pkg.tar.zst",
+      "members": [
+        "mingw32/bin/libwinpthread-1.dll"
+      ]
+    },
+    {
+      "name": "zstd",
+      "url": "https://mirror.msys2.org/mingw/mingw32/mingw-w64-i686-zstd-1.5.7-2-any.pkg.tar.zst",
+      "sha256": "e31d4194702b12f83b7b27b03fe4a68a5c2edc63dc4bd4689ab9d5a7bd8e5fff",
+      "archive": "zstd.pkg.tar.zst",
+      "members": [
+        "mingw32/bin/libzstd.dll"
+      ]
+    }
+  ]
+}

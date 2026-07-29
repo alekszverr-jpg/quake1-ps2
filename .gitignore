@@ -12,6 +12,8 @@
 *.[Pp][Aa][Kk]
 
 # Build products
+/build/
+__pycache__/
 *.o
 *.a
 *.map
@@ -21,10 +23,10 @@
 /source/obj/
 
 # Local toolchain and editor state
+/.cache/
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
 *.user
 *.suo
-

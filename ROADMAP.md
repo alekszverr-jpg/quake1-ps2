@@ -13,11 +13,11 @@ hardware testing exposes platform-specific constraints.
 
 ## 0.2.0 — Reproducible Build
 
-- [ ] Port the build to the current PS2DEV/PS2SDK toolchain.
-- [ ] Add a pinned container or equivalent reproducible environment.
-- [ ] Embed only redistributable IOP modules from the active SDK.
-- [ ] Produce an unpacked development ELF and a packed release ELF.
-- [ ] Add automated compile checks.
+- [x] Port the build to the current PS2DEV/PS2SDK toolchain.
+- [x] Add a pinned container or equivalent reproducible environment.
+- [x] Embed only redistributable IOP modules from the active SDK.
+- [x] Produce an unpacked development ELF and a packed release ELF.
+- [x] Add automated compile checks.
 
 ## 0.3.0 — Platform Foundation
 
@@ -82,4 +82,3 @@ hardware testing exposes platform-specific constraints.
 Version 1.0.0 requires successful real-hardware testing, correct video timing,
 working sound and controls, reliable save/load behavior, and completion of the
 original Quake campaign without a release-blocking defect.
-
