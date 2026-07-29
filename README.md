@@ -52,9 +52,18 @@ Quake game data is not part of this repository. Provide your own legally
 obtained `id1` directory when testing the port. Do not commit PAK files,
 music, save games, or configuration files.
 
+## Credits
+
+The original PlayStation 2 port was created in 2004 by **Nicolas Plourde**,
+also known as **nic067**. This modernization project is built on his pioneering
+work bringing Quake to the PS2. His original release notes are preserved in
+[readme.txt](readme.txt).
+
+Quake was originally created by id Software. Additional libraries and PS2
+modules remain the work of their respective authors and contributors.
+
 ## License
 
 The Quake source code is distributed under the GNU General Public License
 version 2; see [gnu.txt](gnu.txt). Game assets are not covered by that license.
 Third-party PS2 modules and libraries retain their respective licenses.
-
