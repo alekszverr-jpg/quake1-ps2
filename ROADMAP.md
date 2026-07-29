@@ -23,18 +23,22 @@ hardware testing exposes platform-specific constraints.
 
 - [x] Discover game data beside the ELF through PCSX2 `host:` or USB `mass:`.
 - [ ] Replace obsolete PS2SDK APIs and handwritten system calls.
-- [ ] Correct file-handle error handling and path construction.
-- [ ] Implement monotonic high-resolution timing and deterministic frame deltas.
-- [ ] Make IOP reset and module loading reliable across launchers.
-- [ ] Add serial/host diagnostic logging and useful fatal-error output.
+- [x] Correct file-handle error handling and path construction.
+- [x] Implement monotonic timing and deterministic frame deltas.
+- [x] Make IOP reset and module loading reliable across LaunchELF and PCSX2.
+- [x] Add host diagnostic logging and useful on-screen fatal-error output.
 
 ## 0.4.0 — Video and Frame Pacing
 
-- [ ] Correct GS DMA transfer sizes and buffer bounds.
+- [x] Correct GS DMA transfer sizes and buffer alignment.
 - [ ] Introduce VSync and double buffering.
 - [ ] Render at an efficient internal resolution and scale through the GS.
 - [ ] Support NTSC, PAL, and 480p with correct aspect ratios.
 - [ ] Eliminate tearing and validate 60/50 Hz frame pacing.
+
+NTSC boot and gameplay are now validated in PCSX2 and on real hardware.
+The NTSC display origin and the 320-pixel status bar scaling have also been
+corrected; PAL and 480p remain to be validated.
 
 ## 0.5.0 — Input
 
@@ -53,7 +57,7 @@ hardware testing exposes platform-specific constraints.
 
 ## 0.7.0 — Storage and Game Content
 
-- [ ] Validate USB mass-storage loading on real hardware.
+- [x] Validate USB mass-storage loading on real hardware.
 - [ ] Add memory-card save support with clear failure messages.
 - [ ] Validate shareware and registered data layouts.
 - [ ] Support command-line mods without hard-coded device paths.

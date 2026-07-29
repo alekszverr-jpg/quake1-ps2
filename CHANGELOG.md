@@ -7,12 +7,15 @@ and the project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-07-29
+
 ### Added
 
 - Added game-data discovery beside the ELF through PCSX2 `host:` and USB
   `mass:`, with a clear error when `id1/pak0.pak` cannot be found.
 - Embedded the current PS2SDK BDM, FAT, fileXio, keyboard, and mouse modules in
   the ELF so no external `irx` directory is required.
+- Added on-screen fatal-error reporting during early startup.
 
 ### Changed
 
@@ -24,6 +27,28 @@ and the project follows [Semantic Versioning](https://semver.org/).
   allowing the same code to access PCSX2 `host:` and USB `mass:`.
 - Corrected negative file-descriptor handling and file creation semantics in
   the PS2 system layer.
+- Replaced handwritten cache, GS interrupt-mask, CRTC, and GIF DMA operations
+  with supported PS2SDK APIs.
+- Disabled unavailable USB keyboard and mouse polling on the PCSX2 `host:`
+  path while preserving gamepad input.
+
+### Fixed
+
+- Fixed the GIF transfer size calculation and cache coherency that previously
+  produced black or gray screens.
+- Fixed a real-hardware hang during GS initialization by initializing only the
+  GIF DMA channel instead of resetting the entire DMAC.
+- Corrected NTSC display timing so the picture and HUD are no longer shifted
+  down and clipped on a CRT.
+- Expanded Quake's fixed 320-pixel status bar across the 640-pixel framebuffer
+  without reducing the resolution of the 3D scene.
+- Replaced the obsolete timer with a stable monotonic runtime clock.
+
+### Validation
+
+- Confirmed boot and gameplay in PCSX2.
+- Confirmed USB game-data loading, boot, and gameplay on a real PlayStation 2
+  through LaunchELF.
 
 ## [0.2.0] - 2026-07-29
 
@@ -54,6 +79,7 @@ and the project follows [Semantic Versioning](https://semver.org/).
 - Repository rules excluding Quake game data, user state, prebuilt ELF files,
   binary IOP modules, and generated build products.
 
-[Unreleased]: https://github.com/alekszverr-jpg/quake1-ps2/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/alekszverr-jpg/quake1-ps2/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/alekszverr-jpg/quake1-ps2/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/alekszverr-jpg/quake1-ps2/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/alekszverr-jpg/quake1-ps2/releases/tag/v0.1.0

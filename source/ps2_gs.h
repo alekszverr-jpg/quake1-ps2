@@ -386,10 +386,8 @@
 
 #define SEND_GS_PACKET(NAME) \
 	ps2_flush_cache(0);							\
-	SET_QWC(GIF_QWC, NAME##_dma_size);			\
-	SET_MADR(GIF_MADR, &(NAME), 0);				\
-	SET_CHCR(GIF_CHCR, 1, 0, 0, 0, 0, 1, 0);	\
-	DMA_WAIT(GIF_CHCR)
+	dma_channel_send_normal(DMA_CHANNEL_GIF, NAME, NAME##_dma_size, 0, 0); \
+	dma_channel_wait(DMA_CHANNEL_GIF, 0)
 	
 //---------------------------------------------------------------------------
 // BITBLTBUF Register - Setup Image Transfer Between EE and GS
@@ -490,7 +488,6 @@ extern "C" {
 #endif
 
 extern void ps2_flush_cache(int command);
-extern void dma_reset();
 extern void gs_set_imr();
 extern void gs_set_crtc(unsigned char int_mode, unsigned char ntsc_pal_vesa, unsigned char field_mode);
 extern void gs_init(GS_MODE mode);

@@ -6,6 +6,8 @@
 	Copyright (c) Nicolas Plourde - july 2004
 */
 
+#include <kernel.h>
+#include <dma.h>
 #include "ps2_gs.h"
  
 /*
@@ -13,52 +15,7 @@
 */
 void ps2_flush_cache(int command)
 {
-	asm (
-			"li	$3,0x64"	"\n\t"
-			"syscall"		"\n\t"
-			:
-			:"r"(command)
-		);
-			
-	return;
-}
-
-/*
-	void dma_reset() - Reset dma
-*/
-void dma_reset()
-{
-	asm (
-			"li		$2,0x1000A000"	"\n\t"
-			"nop"					"\n\t"
-			"sw		$0,0x80($2)"	"\n\t"
-			"sw		$0,0($2)"		"\n\t"
-			"sw		$0,0x30($2)"	"\n\t"
-			"sw		$0,0x10($2)"	"\n\t"
-			"sw		$0,0x50($2)"	"\n\t"
-			"sw		$0,0x40($2)"	"\n\t"
-			"li		$2,0xFF1F"		"\n\t"
-			"sw		$2,0x1000E010"	"\n\t"
-			"lw		$2,0x1000E010"	"\n\t"
-			"li		$3,0xFF1F"		"\n\t"
-			"and	$2,$3"			"\n\t"
-			"sw		$2,0x1000E010"	"\n\t"
-			"sw		$0,0x1000E000"	"\n\t"
-			"sw		$0,0x1000E020"	"\n\t"
-			"sw		$0,0x1000E030"	"\n\t"
-			"sw		$0,0x1000E050"	"\n\t"
-			"sw		$0,0x1000E040"	"\n\t"
-			"li		$3,1"			"\n\t"
-			"lw		$2,0x1000E000"	"\n\t"
-			"ori	$3,$2,1"		"\n\t"
-			"nop"					"\n\t"
-			"sw		$3,0x1000E000"	"\n\t"
-			"nop"					"\n\t"
-			:
-			:
-		);
-			
-	return;
+	FlushCache(command);
 }
 
 /*
@@ -66,17 +23,7 @@ void dma_reset()
 */
 void gs_set_imr()
 {
-	asm (
-			"li		$4,0x0000FF00"  "\n\t"
-			"ld		$2,0x12001000"  "\n\t"
-			"dsrl   $2,16"			"\n\t"
-			"andi   $2,0xFF"		"\n\t"
-			"li		$3,0x71"		"\n\t"
-			"nop"					"\n\t"
-			"syscall"				"\n\t"
-			:
-			:
-		);
+	GsPutIMR(0x00007700);
 }
 
 /*
@@ -84,12 +31,7 @@ void gs_set_imr()
 */
 void gs_set_crtc(unsigned char int_mode, unsigned char ntsc_pal_vesa, unsigned char field_mode)
 {
-	asm (
-			"li		$3,0x02"	"\n\t"
-			"syscall"			"\n\t"
-			:
-			:"r" (int_mode),"r" (ntsc_pal_vesa),"r" (field_mode)
-		);
+	SetGsCrt(int_mode, ntsc_pal_vesa, field_mode);
 }
 
 /*
@@ -115,7 +57,8 @@ void gs_init(GS_MODE mode)
 	max_x=mode.width-1;		// current resolution max coordinates
 	max_y=mode.height-1;
 
-	dma_reset();
+	dma_channel_initialize(DMA_CHANNEL_GIF, NULL, 0);
+
 	GS_RESET();
 
 	// - Can someone please tell me what the sync.p 
@@ -216,17 +159,17 @@ int gs_detect_mode()
 #define MAX_TRANSFER	16384
 void put_image(uint16 x, uint16 y, uint16 w, uint16 h, uint32 *data)
 {
-	uint32 i;			// DMA buffer loop counter
-	uint32 frac;		// flag for whether to run a fractional buffer or not
-	uint32 current;		// number of pixels to transfer in current DMA
-	uint32 qtotal;		// total number of qwords of data to transfer
+	uint32 i;
+	uint32 frac;
+	uint32 current;
+	uint32 qtotal;
 
 	BEGIN_GS_PACKET(gs_dma_buf);
 	GIF_TAG_AD(gs_dma_buf, 4, 1, 0, 0, 0);
 	GIF_DATA_AD(gs_dma_buf, bitbltbuf,
 		GS_BITBLTBUF(0, 0, 0,
-			0,						// frame buffer address
-			(max_x+1)/64,		// frame buffer width
+			0,
+			(max_x+1)/64,
 			0));
 	GIF_DATA_AD(gs_dma_buf, trxpos,
 		GS_TRXPOS(
@@ -234,18 +177,19 @@ void put_image(uint16 x, uint16 y, uint16 w, uint16 h, uint32 *data)
 			0,
 			x,
 			y,
-			0));	// left to right/top to bottom
+			0));
 	GIF_DATA_AD(gs_dma_buf, trxreg, GS_TRXREG(w, h));
 	GIF_DATA_AD(gs_dma_buf, trxdir, GS_TRXDIR(XDIR_EE_GS));
 	SEND_GS_PACKET(gs_dma_buf);
 
-	qtotal = w*h*4;					// total number of quadwords to transfer.
-	current = qtotal % MAX_TRANSFER;// work out if a partial buffer transfer is needed.
-	frac=1;							// assume yes.
-	if(!current)					// if there is no need for partial buffer
+	/* Four 32-bit pixels fit in one 128-bit GIF qword. */
+	qtotal = (w*h+3)/4;
+	current = qtotal % MAX_TRANSFER;
+	frac=1;
+	if(!current)
 	{
-		current = MAX_TRANSFER;		// start with a full buffer
-		frac=0;						// and don't do extra partial buffer first
+		current = MAX_TRANSFER;
+		frac=0;
 	}
 	for(i=0; i<(qtotal/MAX_TRANSFER)+frac; i++)
 	{
@@ -253,13 +197,12 @@ void put_image(uint16 x, uint16 y, uint16 w, uint16 h, uint32 *data)
 		GIF_TAG_IMG(gs_dma_buf, current);
 		SEND_GS_PACKET(gs_dma_buf);
 
-		SET_QWC(GIF_QWC, current);
-		SET_MADR(GIF_MADR, data, 0);
-		SET_CHCR(GIF_CHCR, 1, 0, 0, 0, 0, 1, 0);
-		DMA_WAIT(GIF_CHCR);
+		ps2_flush_cache(0);
+		dma_channel_send_normal(DMA_CHANNEL_GIF, data, current, 0, 0);
+		dma_channel_wait(DMA_CHANNEL_GIF, 0);
 
 		data += current*4;
-		current = MAX_TRANSFER;		// after the first one, all are full buffers
+		current = MAX_TRANSFER;
 	}
 }
 

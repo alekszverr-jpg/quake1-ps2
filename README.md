@@ -3,12 +3,13 @@
 An effort to restore, modernize, and stabilize the historical Quake port for
 the Sony PlayStation 2.
 
-Current version: **0.2.0 — Reproducible Build**
+Current version: **0.3.0 — Platform Foundation**
 
-The repository currently preserves the original 2004 port and its expanded
-2009 source snapshot. The code now builds with a pinned current PS2DEV
-toolchain, but it has not yet completed emulator or real-hardware validation
-and should not be considered a production-ready release.
+The repository preserves the original 2004 port and its expanded 2009 source
+snapshot. The modernized code builds with a pinned current PS2DEV toolchain
+and has successfully booted into gameplay in PCSX2 and on a real PlayStation 2.
+Audio, frame pacing, complete controls, and long-session stability still need
+validation before the port can be considered production-ready.
 
 ## Goals
 

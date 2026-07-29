@@ -19,6 +19,7 @@ void IOP_reset(void);
 int exit1();
 void LoadElf(const char *elf, char* path);
 const char *loadmodules(int argc, char **argv);
+int PS2_UsbInputAvailable(void);
 void CleanUp();
 void Reset_IOP();
 #endif

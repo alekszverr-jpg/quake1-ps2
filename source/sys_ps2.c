@@ -34,6 +34,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <unistd.h>
 #include <sys/stat.h>
 #include <signal.h>
+#include <time.h>
 #include <debug.h>
 
 #include "quakedef.h"
@@ -293,12 +294,14 @@ void Sys_MakeCodeWriteable (unsigned long startaddr, unsigned long length)
 void Sys_Error (char *error, ...)
 {
 	va_list         argptr;
+	char            message[512];
 
-	printf ("Sys_Error: ");   
 	va_start (argptr,error);
-	vprintf (error,argptr);
+	vsnprintf (message, sizeof(message), error, argptr);
 	va_end (argptr);
-	printf ("\n");
+
+	printf ("Sys_Error: %s\n", message);
+	scr_printf ("\nERROR: %s\n", message);
 
 	exit (1);
 }
@@ -324,9 +327,18 @@ void Sys_Quit (void)
 
 float Sys_FloatTime (void)
 {
-	static float t;
-	t = count_time/100;
-	return t;	
+	static clock_t base;
+	static qboolean initialized;
+	clock_t now;
+
+	now = clock();
+	if (!initialized)
+	{
+		base = now;
+		initialized = true;
+	}
+
+	return (float)(now - base) / (float)CLOCKS_PER_SEC;
 }
 
 char *Sys_ConsoleInput (void)
@@ -357,7 +369,9 @@ int main (int argc, char **argv)
 	static quakeparms_t    parms;
 	const char *base_path;
 	float  time, oldtime, newtime;
-    
+
+	init_scr();
+
 	//signal(SIGFPE, SIG_IGN);
 	//SifInitRpc(0);
 	base_path = loadmodules(argc, argv);
@@ -388,8 +402,6 @@ int main (int argc, char **argv)
 	printf ("Host_Init\n");
 	Host_Init (&parms);
 	
-	start_ps2_timer();
-	
 	oldtime = Sys_FloatTime () - 0.1;
     while (1)
     {
@@ -405,4 +417,3 @@ int main (int argc, char **argv)
 	
 	return 0;
 }
-

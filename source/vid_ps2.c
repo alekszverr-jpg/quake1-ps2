@@ -58,7 +58,7 @@ static long buffersize;
 
 unsigned short	d_8to16table[256];
 
-static uint32 tmp[BASEWIDTH*BASEHEIGHT];
+static uint32 tmp[BASEWIDTH*BASEHEIGHT] __attribute__((aligned(64)));
 
 typedef struct
 {
@@ -131,6 +131,8 @@ void	VID_Init (unsigned char *palette)
 	verbose=COM_CheckParm("-verbose");
 	
 	vid_buffer = malloc(vid.width*vid.height);
+	if (vid_buffer == NULL)
+		Sys_Error ("Unable to allocate video buffer");
 	
 	ResetFrameBuffer();
 
@@ -144,7 +146,12 @@ void	VID_Init (unsigned char *palette)
 	vid.aspect = ((float)vid.height / (float)vid.width) * (320.0 / 240.0);
 
 	#ifdef _NTSC
-	GS_MODE mode = {2,640,224,0,32,4,656,36};//NTSC-I (640x224))
+	/*
+	 * Current PS2SDK NTSC timing uses an origin of (652, 26) for a
+	 * 2560x224 display area.  The old port used y=36, which pushed the
+	 * picture down by ten scanlines and clipped the status bar on CRTs.
+	 */
+	GS_MODE mode = {2,640,224,0,32,4,652,26};//NTSC-NI (640x224)
 	#endif
 	#ifdef _VESA
 	GS_MODE mode = {0x1C,640,480,0,32,2,356,18}; //VESA 640x480x32 75hertz
@@ -164,15 +171,41 @@ void	VID_Shutdown (void)
 void	VID_Update (vrect_t *rects)
 {
 	extern int scr_fullupdate;
+	int hud_source_x;
+	int hud_top;
+	int source_offset;
+	int x;
+	int y;
+	byte pixel;
+
 	scr_fullupdate = 0;
-	
-	int i;
-	for(i=0;i<vid.width*vid.height;i++)
+
+	/*
+	 * Quake's status bar artwork is a fixed 320 pixels wide.  Keep the
+	 * world renderer at 640 pixels, but expand only the HUD while converting
+	 * the indexed frame to the 32-bit GS upload buffer.
+	 */
+	hud_top = vid.height - sb_lines;
+	hud_source_x = (cl.gametype == GAME_DEATHMATCH)
+		? 0
+		: (vid.width - 320) / 2;
+
+	for (y = 0; y < vid.height; y++)
 	{
-		tmp[i] =	((uint8)(myPalette[vid.buffer[i]].red)  << 0)   |
-					((uint8)(myPalette[vid.buffer[i]].green)<< 8)   | 
-					((uint8)(myPalette[vid.buffer[i]].blue) << 16)  |
-					((uint8)(255)							<< 24);
+		for (x = 0; x < vid.width; x++)
+		{
+			if (vid.width == 640 && sb_lines > 0 && y >= hud_top)
+				source_offset = y * vid.rowbytes + hud_source_x + (x >> 1);
+			else
+				source_offset = y * vid.rowbytes + x;
+
+			pixel = vid.buffer[source_offset];
+			tmp[y * vid.width + x] =
+				((uint8)(myPalette[pixel].red)   << 0)  |
+				((uint8)(myPalette[pixel].green) << 8)  |
+				((uint8)(myPalette[pixel].blue)  << 16) |
+				((uint8)(255)                    << 24);
+		}
 	}
 
 	put_image(0, 0, vid.width, vid.height, (uint32*)tmp);

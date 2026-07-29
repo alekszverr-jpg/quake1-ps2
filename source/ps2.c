@@ -29,6 +29,12 @@ extern unsigned int size_ps2mouse_irx;
 
 static char launch_base_path[BASE_PATH_SIZE];
 static char probe_path[BASE_PATH_SIZE + sizeof(QUAKE_PAK_RELATIVE_PATH) + 1];
+static int usb_input_available;
+
+int PS2_UsbInputAvailable(void)
+{
+	return usb_input_available;
+}
 
 static void ExecIopModule(const char *name, void *image, unsigned int size)
 {
@@ -144,6 +150,7 @@ const char *loadmodules(int argc, char **argv)
 		SifInitRpc(0);
 		LoadRomModule("rom0:SIO2MAN");
 		LoadRomModule("rom0:PADMAN");
+		usb_input_available = 0;
 		printf("Game data found beside the ELF at %s/id1\n", host_base_path);
 		return host_base_path;
 	}
@@ -161,6 +168,7 @@ const char *loadmodules(int argc, char **argv)
 	ExecIopModule("usbmass_bd", usbmass_bd_irx, size_usbmass_bd_irx);
 	ExecIopModule("ps2kbd", ps2kbd_irx, size_ps2kbd_irx);
 	ExecIopModule("ps2mouse", ps2mouse_irx, size_ps2mouse_irx);
+	usb_input_available = 1;
 
 	LoadRomModule("rom0:SIO2MAN");
 	LoadRomModule("rom0:PADMAN");

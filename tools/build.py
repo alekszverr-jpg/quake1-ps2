@@ -281,6 +281,8 @@ def main() -> int:
         "-lpad",
         "-lfileXio",
         "-lpatches",
+        "-ldebug",
+        "-ldma",
         "-lm",
         "-lc",
     ]
