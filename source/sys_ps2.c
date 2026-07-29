@@ -30,7 +30,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <sifrpc.h>
 #include <loadfile.h>
 #include <fileio.h>
-#include <fileXio_rpc.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
 #include <signal.h>
 #include <debug.h>
 
@@ -185,8 +187,8 @@ int filelength (int f)
 {
 	int end;
 	
-	end = fileXioLseek(f, 0, SEEK_END);
-	fileXioLseek(f, 0, SEEK_SET);
+	end = lseek(f, 0, SEEK_END);
+	lseek(f, 0, SEEK_SET);
 
 	return end;
 }
@@ -198,7 +200,7 @@ int Sys_FileOpenRead (char *path, int *hndl)
 	
 	i = findhandle ();
 
-	f = fileXioOpen(path, O_RDONLY);
+	f = open(path, O_RDONLY);
 	if (f < 0)
 	{
 		*hndl = -1;
@@ -226,7 +228,7 @@ int Sys_FileOpenWrite (char *path)
 	
 	i = findhandle ();
 
-	f = fileXioOpen(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+	f = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
 	if (f < 0)
 		return -1;
 
@@ -240,30 +242,30 @@ void Sys_FileClose (int handle)
 	if (handle <= 0 || handle >= MAX_HANDLES || sys_handles[handle] < 0)
 		return;
 
-	fileXioClose(sys_handles[handle]);
+	close(sys_handles[handle]);
 	sys_handles[handle] = -1;
 }
 
 void Sys_FileSeek (int handle, int position)
 {
-	fileXioLseek(sys_handles[handle], position, SEEK_SET);
+	lseek(sys_handles[handle], position, SEEK_SET);
 }
 
 int Sys_FileRead (int handle, void *dest, int count)
 {
-	return fileXioRead(sys_handles[handle], dest, count);
+	return read(sys_handles[handle], dest, count);
 }
 
 int Sys_FileWrite (int handle, void *data, int count)
 {
-	return fileXioWrite(sys_handles[handle], data, count);
+	return write(sys_handles[handle], data, count);
 }
 
 int     Sys_FileTime (char *path)
 {
-	iox_stat_t stat;
+	struct stat path_stat;
 
-	if (fileXioGetStat(path, &stat) >= 0)
+	if (stat(path, &path_stat) >= 0)
 		return 1;
 	
 	return -1;
@@ -271,7 +273,7 @@ int     Sys_FileTime (char *path)
 
 void Sys_mkdir (char *path)
 {
-	fileXioMkdir(path, 0777);
+	mkdir(path, 0777);
 }
 
 
@@ -352,15 +354,13 @@ void Sys_LowFPPrecision (void)
 
 int main (int argc, char **argv)
 { 
-    #ifdef _IOPRESET
-    IOP_reset();
-    #endif
 	static quakeparms_t    parms;
+	const char *base_path;
 	float  time, oldtime, newtime;
     
 	//signal(SIGFPE, SIG_IGN);
 	//SifInitRpc(0);
-	loadmodules();
+	base_path = loadmodules(argc, argv);
     #ifdef _SOUND
 	 if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_TIMER) < 0)
 	{
@@ -378,7 +378,7 @@ int main (int argc, char **argv)
 	
 	parms.memsize = 24*1024*1024;
 	parms.membase = malloc (parms.memsize);
-	parms.basedir = "mass:";
+	parms.basedir = (char *)base_path;
 
 	COM_InitArgv (argc, argv);
 
@@ -405,5 +405,4 @@ int main (int argc, char **argv)
 	
 	return 0;
 }
-
 
