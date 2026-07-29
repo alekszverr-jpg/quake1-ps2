@@ -65,20 +65,24 @@ Quake game data is not part of this repository. Provide your own legally
 obtained `id1` directory when testing the port. Do not commit PAK files,
 music, save games, or configuration files.
 
-The PS2 build loads game data exclusively from a FAT32 USB drive through
-`mass:`. Place the data at the root of the drive:
+The port looks for `id1` beside the launched ELF. On PCSX2 it first probes the
+emulator's `host:` filesystem. On a real console it starts the embedded USB/FAT
+drivers and uses the ELF launch path on the FAT32 drive:
 
 ```text
-mass:/
+quake-test/
+├── quake.elf
 └── id1/
     ├── pak0.pak
     └── pak1.pak  # registered version only
 ```
 
 The ELF embeds the required PS2SDK USB, FAT, keyboard, and mouse modules, so
-the drive does not need a separate `irx` directory. At startup the port waits
-up to five seconds for `mass:/id1/pak0.pak`; it does not fall back to `host:`.
-Expansion and `-game` directories are resolved from the same `mass:` root.
+the drive does not need a separate `irx` directory. PCSX2 requires
+**Settings → Emulation → Enable Host Filesystem**. On hardware the port waits
+up to five seconds for USB enumeration. If a launcher does not provide the ELF
+path, `mass:/id1` remains available as a compatibility fallback. Expansion and
+`-game` directories are resolved relative to the same detected base path.
 
 ## Credits
 

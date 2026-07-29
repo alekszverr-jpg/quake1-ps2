@@ -21,7 +21,7 @@ hardware testing exposes platform-specific constraints.
 
 ## 0.3.0 — Platform Foundation
 
-- [x] Boot exclusively from USB `mass:` through the current BDM/fileXio stack.
+- [x] Discover game data beside the ELF through PCSX2 `host:` or USB `mass:`.
 - [ ] Replace obsolete PS2SDK APIs and handwritten system calls.
 - [ ] Correct file-handle error handling and path construction.
 - [ ] Implement monotonic high-resolution timing and deterministic frame deltas.

@@ -18,7 +18,7 @@ void wyjscie();
 void IOP_reset(void);
 int exit1();
 void LoadElf(const char *elf, char* path);
-void loadmodules(void);
+const char *loadmodules(int argc, char **argv);
 void CleanUp();
 void Reset_IOP();
 #endif

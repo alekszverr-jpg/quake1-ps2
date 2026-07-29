@@ -23,7 +23,12 @@ extern unsigned int size_ps2mouse_irx;
 
 #define USB_WAIT_TOTAL_MSEC 5000
 #define USB_WAIT_STEP_MSEC 100
-#define QUAKE_PAK_PATH "mass:/id1/pak0.pak"
+#define QUAKE_PAK_RELATIVE_PATH "id1/pak0.pak"
+/* Keep this in sync with Quake's MAX_OSPATH-sized base-directory buffers. */
+#define BASE_PATH_SIZE 128
+
+static char launch_base_path[BASE_PATH_SIZE];
+static char probe_path[BASE_PATH_SIZE + sizeof(QUAKE_PAK_RELATIVE_PATH) + 1];
 
 static void ExecIopModule(const char *name, void *image, unsigned int size)
 {
@@ -46,16 +51,65 @@ static void LoadRomModule(const char *name)
 		Sys_Error("IOP ROM module '%s' failed (id %d)", name, id);
 }
 
-static int UsbGameDataReady(void)
+static int GameDataReady(const char *base_path)
 {
-	int file;
+	FILE *file;
 
-	file = fileXioOpen(QUAKE_PAK_PATH, O_RDONLY);
-	if (file < 0)
+	snprintf(probe_path, sizeof(probe_path), "%s/%s",
+		base_path, QUAKE_PAK_RELATIVE_PATH);
+	file = fopen(probe_path, "rb");
+	if (file == NULL)
 		return 0;
 
-	fileXioClose(file);
+	fclose(file);
 	return 1;
+}
+
+static const char *FindHostBasePath(void)
+{
+	static const char *host_candidates[] = {
+		"host:",
+		"host:."
+	};
+	unsigned int i;
+
+	for (i = 0; i < sizeof(host_candidates) / sizeof(host_candidates[0]); ++i)
+	{
+		if (GameDataReady(host_candidates[i]))
+			return host_candidates[i];
+	}
+
+	return NULL;
+}
+
+static const char *FindMassLaunchBasePath(int argc, char **argv)
+{
+	char *slash;
+	char *backslash;
+	size_t length;
+
+	if (argc < 1 || argv == NULL || argv[0] == NULL ||
+		strncmp(argv[0], "mass:", 5) != 0)
+		return "mass:";
+
+	length = strlen(argv[0]);
+	if (length >= sizeof(launch_base_path))
+		return "mass:";
+
+	memcpy(launch_base_path, argv[0], length + 1);
+	slash = strrchr(launch_base_path, '/');
+	backslash = strrchr(launch_base_path, '\\');
+	if (backslash != NULL && (slash == NULL || backslash > slash))
+		slash = backslash;
+
+	if (slash == NULL)
+		return "mass:";
+
+	*slash = '\0';
+	if (launch_base_path[0] == '\0')
+		return "mass:";
+
+	return launch_base_path;
 }
 
 void IOP_reset(void)
@@ -71,9 +125,33 @@ void IOP_reset(void)
 	sbv_patch_disable_prefix_check();
 }
 
-void loadmodules(void)
+const char *loadmodules(int argc, char **argv)
 {
+	const char *base_path;
+	const char *host_base_path;
 	int waited;
+
+	/*
+	 * PCSX2 exposes the directory containing the launched ELF through host:.
+	 * Probe it before resetting the IOP, because the emulator supplies the
+	 * host filesystem without the USB/fileXio module stack.
+	 */
+	host_base_path = FindHostBasePath();
+	if (host_base_path != NULL)
+	{
+		/* Match the Quake II host path: keep the existing IOP, but ensure
+		 * the ROM-resident controller modules are available. */
+		SifInitRpc(0);
+		LoadRomModule("rom0:SIO2MAN");
+		LoadRomModule("rom0:PADMAN");
+		printf("Game data found beside the ELF at %s/id1\n", host_base_path);
+		return host_base_path;
+	}
+
+	printf("No host: game data found; bringing up USB mass storage...\n");
+#ifdef _IOPRESET
+	IOP_reset();
+#endif
 
 	ExecIopModule("iomanX", iomanx_irx, size_iomanx_irx);
 	ExecIopModule("fileXio", filexio_irx, size_filexio_irx);
@@ -90,18 +168,33 @@ void loadmodules(void)
 	if (fileXioInit() < 0)
 		Sys_Error("Unable to initialize fileXio");
 
-	printf("Waiting for USB game data at %s...\n", QUAKE_PAK_PATH);
+	base_path = FindMassLaunchBasePath(argc, argv);
+	printf("Waiting for game data beside the ELF at %s/id1...\n", base_path);
 	for (waited = 0; waited <= USB_WAIT_TOTAL_MSEC; waited += USB_WAIT_STEP_MSEC)
 	{
-		if (UsbGameDataReady())
+		if (GameDataReady(base_path))
 		{
-			printf("USB game data ready after about %d ms\n", waited);
-			return;
+			printf("USB game data found at %s/id1 after about %d ms\n",
+				base_path, waited);
+			return base_path;
+		}
+
+		/*
+		 * Some launchers do not pass the ELF path in argv[0]. Keep the
+		 * traditional mass:/ root as a compatibility fallback.
+		 */
+		if (strcmp(base_path, "mass:") != 0 && GameDataReady("mass:"))
+		{
+			printf("USB game data found at mass:/id1 after about %d ms\n",
+				waited);
+			return "mass:";
 		}
 		DelayThread(USB_WAIT_STEP_MSEC * 1000);
 	}
 
 	Sys_Error(
-		"No Quake game data found on USB.\n"
-		"Use a FAT32 drive and place id1/pak0.pak at its root.");
+		"No Quake game data found beside the ELF.\n"
+		"PCSX2: enable Host Filesystem and place id1 next to the ELF.\n"
+		"PS2: place id1 next to the ELF on a FAT32 USB drive.");
+	return NULL;
 }
