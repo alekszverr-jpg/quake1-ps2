@@ -7,6 +7,11 @@ and the project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Credited Nicolas Plourde (nic067), creator of the original 2004 PlayStation 2
+  port, in the project documentation.
+
 ### Planned
 
 - Reproducible builds using the current PS2DEV toolchain.
