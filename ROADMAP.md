@@ -21,6 +21,7 @@ hardware testing exposes platform-specific constraints.
 
 ## 0.3.0 — Platform Foundation
 
+- [x] Boot exclusively from USB `mass:` through the current BDM/fileXio stack.
 - [ ] Replace obsolete PS2SDK APIs and handwritten system calls.
 - [ ] Correct file-handle error handling and path construction.
 - [ ] Implement monotonic high-resolution timing and deterministic frame deltas.
@@ -52,7 +53,7 @@ hardware testing exposes platform-specific constraints.
 
 ## 0.7.0 — Storage and Game Content
 
-- [ ] Load game data reliably from USB mass storage.
+- [ ] Validate USB mass-storage loading on real hardware.
 - [ ] Add memory-card save support with clear failure messages.
 - [ ] Validate shareware and registered data layouts.
 - [ ] Support command-line mods without hard-coded device paths.

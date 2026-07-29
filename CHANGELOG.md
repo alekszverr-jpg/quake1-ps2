@@ -7,6 +7,22 @@ and the project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Added a mass-only boot path that waits for `mass:/id1/pak0.pak` and reports
+  a clear error when USB game data is unavailable.
+- Embedded the current PS2SDK BDM, FAT, fileXio, keyboard, and mouse modules in
+  the ELF so no external `irx` directory is required.
+
+### Changed
+
+- Replaced the obsolete usbhdfsd/fio path with the BDM/fileXio stack used by
+  the Quake II PS2 port.
+- Resolve the base game, expansions, and `-game` directories from `mass:`
+  instead of allowing relative paths to fall through to `host:`.
+- Corrected negative file-descriptor handling and file creation semantics in
+  the PS2 system layer.
+
 ## [0.2.0] - 2026-07-29
 
 ### Added

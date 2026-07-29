@@ -1,115 +1,107 @@
-
 #include "ps2.h"
-#include "pad.h"
-extern u32 usbd_irx;
-extern u32 size_usbd_irx;
+#include "sys.h"
 
-extern u32 usbhdfsd_irx;
-extern u32 size_usbhdfsd_irx;
+#include <delaythread.h>
+#include <fileXio_rpc.h>
 
-extern u32 iomanx_irx;
-extern u32 size_iomanx_irx;
+extern unsigned char iomanx_irx[];
+extern unsigned int size_iomanx_irx;
+extern unsigned char filexio_irx[];
+extern unsigned int size_filexio_irx;
+extern unsigned char bdm_irx[];
+extern unsigned int size_bdm_irx;
+extern unsigned char bdmfs_fatfs_irx[];
+extern unsigned int size_bdmfs_fatfs_irx;
+extern unsigned char usbd_irx[];
+extern unsigned int size_usbd_irx;
+extern unsigned char usbmass_bd_irx[];
+extern unsigned int size_usbmass_bd_irx;
+extern unsigned char ps2kbd_irx[];
+extern unsigned int size_ps2kbd_irx;
+extern unsigned char ps2mouse_irx[];
+extern unsigned int size_ps2mouse_irx;
 
- 
-void IOP_reset() // resets IOP and apply sbv patches.	
-{	
-	SifInitRpc(0);
-	
-	while(!SifIopReset("rom0:UDNL rom0:EELOADCNF",0));
-	while(!SifIopSync());
-	fioExit();
-	SifExitIopHeap();
-	SifLoadFileExit();
-	SifExitRpc();
-	SifExitCmd();
-	SifInitRpc(0);
-  	FlushCache(0);
-  	FlushCache(2);
-  	//twice, some in-hdloader hack
-  	while(!SifIopReset("rom0:UDNL rom0:EELOADCNF",0));
-  	while(!SifIopSync());
-  	fioExit();
-  	SifExitIopHeap();
-  	SifLoadFileExit();
-  	SifExitRpc();
-  	SifExitCmd();
+#define USB_WAIT_TOTAL_MSEC 5000
+#define USB_WAIT_STEP_MSEC 100
+#define QUAKE_PAK_PATH "mass:/id1/pak0.pak"
 
-  	SifInitRpc(0);
-  	FlushCache(0);
-  	FlushCache(2);
-
-  	SifLoadFileInit();
-
-}	
-
-void loadmodules()
+static void ExecIopModule(const char *name, void *image, unsigned int size)
 {
-   int ret, id;
-     
-    if ((id = SifExecModuleBuffer(&iomanx_irx, size_iomanx_irx, 0, NULL, &ret)) < 0) {
-		printf("Error loading iomanx\n");
-	}
-   ret = SifLoadModule("rom0:SIO2MAN", 0, NULL);
-   if(ret < 0){
-          printf("Error loading rom0:XSIO2MAN\n");
-              }
-   /*ret = SifLoadModule("rom0:MCMAN", 0, NULL);
-   if(ret < 0){
-          printf("Error loading rom0:MCMAN\n");
-              }
-   ret = SifLoadModule("rom0:MCSERV", 0, NULL);
-   if(ret < 0){
-          printf("Error loading rom0:MCSERV\n");
-          }*/
-  //#ifdef _IOPRESET
+	int id;
+	int result;
 
- // #endif            
-   ret = SifLoadModule("rom0:PADMAN", 0, NULL);
-   if(ret < 0){
-          printf("Error loading rom0:XPADMAN\n");
-              }
-  
-  //ret = SifLoadModule("rom0:IOMAN", 0, NULL);
-  // if(ret < 0){
-     //     printf("Error loading rom0:IOMAN\n");
-      //        }
-      
-    if ((id = SifExecModuleBuffer(&usbd_irx, size_usbd_irx, 0, NULL, &ret)) < 0) {
-		printf("Error loading usbd\n");
-	}
-    if ((id = SifExecModuleBuffer(&usbhdfsd_irx, size_usbhdfsd_irx, 0, NULL, &ret)) < 0) {
-		printf("Error loading usbhdfsd\n");
-	}
-	 
-    /*if ((id = SifExecModuleBuffer(&ps2kbd_irx, size_ps2kbd_irx, 0, NULL, &ret)) < 0) {
-		scr_printf("Error loading ps2kbd\n");
-	}
-	 if ((id = SifExecModuleBuffer(&ps2mouse_irx, size_ps2mouse_irx, 0, NULL, &ret)) < 0) {
-		scr_printf("Error loading ps2mouse\n");
-	}
-	if ((id = SifExecModuleBuffer(&ps2snd_irx, size_ps2snd_irx, 0, NULL, &ret)) < 0) {
-		scr_printf("Error loading ps2snd\n");
-	}*/
-/*	ret = SifLoadModule("mass:irx/fileXio.irx", 0, NULL);
-	if (ret < 0) {
-		printf("Failed to load module: fileXio.irx");
-		//SleepThread();
-	}
-	ret = SifLoadModule("mass:irx/ioptrap.irx", 0, NULL);
-	if (ret < 0) {
-		printf("Failed to load module: ioptrap.irx");
-		//SleepThread();
-	}*/
-	
-	ret = SifLoadModule("mass:irx/ps2kbd.irx", 0, NULL);
-	if (ret < 0) {
-		printf("Failed to load module: PS2KBD");
-		//SleepThread();
-	}	
+	id = SifExecModuleBuffer(image, size, 0, NULL, &result);
+	if (id < 0 || result == 1)
+		Sys_Error("IOP module '%s' failed (id %d, result %d)", name, id, result);
 
-	ret = SifLoadModule("mass:irx/ps2mouse.irx", 0, NULL);
-	if (ret < 0) {
-		printf("Failed to load module: PS2MOUSE");
-	//	SleepThread();
+	printf("IOP: started %s (id %d)\n", name, id);
+}
+
+static void LoadRomModule(const char *name)
+{
+	int id;
+
+	id = SifLoadModule(name, 0, NULL);
+	if (id < 0)
+		Sys_Error("IOP ROM module '%s' failed (id %d)", name, id);
+}
+
+static int UsbGameDataReady(void)
+{
+	int file;
+
+	file = fileXioOpen(QUAKE_PAK_PATH, O_RDONLY);
+	if (file < 0)
+		return 0;
+
+	fileXioClose(file);
+	return 1;
+}
+
+void IOP_reset(void)
+{
+	SifInitRpc(0);
+	while (!SifIopReset("", 0))
+		;
+	while (!SifIopSync())
+		;
+	SifInitRpc(0);
+
+	sbv_patch_enable_lmb();
+	sbv_patch_disable_prefix_check();
+}
+
+void loadmodules(void)
+{
+	int waited;
+
+	ExecIopModule("iomanX", iomanx_irx, size_iomanx_irx);
+	ExecIopModule("fileXio", filexio_irx, size_filexio_irx);
+	ExecIopModule("bdm", bdm_irx, size_bdm_irx);
+	ExecIopModule("bdmfs_fatfs", bdmfs_fatfs_irx, size_bdmfs_fatfs_irx);
+	ExecIopModule("usbd", usbd_irx, size_usbd_irx);
+	ExecIopModule("usbmass_bd", usbmass_bd_irx, size_usbmass_bd_irx);
+	ExecIopModule("ps2kbd", ps2kbd_irx, size_ps2kbd_irx);
+	ExecIopModule("ps2mouse", ps2mouse_irx, size_ps2mouse_irx);
+
+	LoadRomModule("rom0:SIO2MAN");
+	LoadRomModule("rom0:PADMAN");
+
+	if (fileXioInit() < 0)
+		Sys_Error("Unable to initialize fileXio");
+
+	printf("Waiting for USB game data at %s...\n", QUAKE_PAK_PATH);
+	for (waited = 0; waited <= USB_WAIT_TOTAL_MSEC; waited += USB_WAIT_STEP_MSEC)
+	{
+		if (UsbGameDataReady())
+		{
+			printf("USB game data ready after about %d ms\n", waited);
+			return;
+		}
+		DelayThread(USB_WAIT_STEP_MSEC * 1000);
 	}
+
+	Sys_Error(
+		"No Quake game data found on USB.\n"
+		"Use a FAT32 drive and place id1/pak0.pak at its root.");
 }

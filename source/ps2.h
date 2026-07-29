@@ -15,10 +15,10 @@
 #include <iopheap.h>
 
 void wyjscie();
-void IOP_reset();
+void IOP_reset(void);
 int exit1();
 void LoadElf(const char *elf, char* path);
-void loadmodules();
+void loadmodules(void);
 void CleanUp();
 void Reset_IOP();
 #endif
