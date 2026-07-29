@@ -1,0 +1,30 @@
+# Quake game data and user state
+/id1/
+
+# Prebuilt releases and proprietary/third-party binary modules
+/irx/
+/mouse/
+/pad/
+/source/irx/
+*.elf
+*.irx
+*.7z
+*.[Pp][Aa][Kk]
+
+# Build products
+*.o
+*.a
+*.map
+/debug-ps2/
+/release-ps2/
+/source/bin/
+/source/obj/
+
+# Local toolchain and editor state
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.user
+*.suo
+
