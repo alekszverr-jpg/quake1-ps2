@@ -96,8 +96,13 @@ SOUND_SOURCES = [
 
 IRX_MODULES = {
     "iomanx_irx": "iomanX.irx",
+    "filexio_irx": "fileXio.irx",
+    "bdm_irx": "bdm.irx",
+    "bdmfs_fatfs_irx": "bdmfs_fatfs.irx",
     "usbd_irx": "usbd.irx",
-    "usbhdfsd_irx": "usbhdfsd.irx",
+    "usbmass_bd_irx": "usbmass_bd.irx",
+    "ps2kbd_irx": "ps2kbd.irx",
+    "ps2mouse_irx": "ps2mouse.irx",
 }
 
 VIDEO_DEFINES = {
@@ -274,6 +279,7 @@ def main() -> int:
         "-lmouse",
         "-lkbd",
         "-lpad",
+        "-lfileXio",
         "-lpatches",
         "-lm",
         "-lc",

@@ -65,6 +65,21 @@ Quake game data is not part of this repository. Provide your own legally
 obtained `id1` directory when testing the port. Do not commit PAK files,
 music, save games, or configuration files.
 
+The PS2 build loads game data exclusively from a FAT32 USB drive through
+`mass:`. Place the data at the root of the drive:
+
+```text
+mass:/
+└── id1/
+    ├── pak0.pak
+    └── pak1.pak  # registered version only
+```
+
+The ELF embeds the required PS2SDK USB, FAT, keyboard, and mouse modules, so
+the drive does not need a separate `irx` directory. At startup the port waits
+up to five seconds for `mass:/id1/pak0.pak`; it does not fall back to `host:`.
+Expansion and `-game` directories are resolved from the same `mass:` root.
+
 ## Credits
 
 The original PlayStation 2 port was created in 2004 by **Nicolas Plourde**,

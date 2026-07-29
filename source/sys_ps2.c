@@ -30,6 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <sifrpc.h>
 #include <loadfile.h>
 #include <fileio.h>
+#include <fileXio_rpc.h>
 #include <signal.h>
 #include <debug.h>
 
@@ -138,44 +139,6 @@ void stop_ps2_timer()
 	H_DisableIntcHandler(INT_TIMER0); // disable handler
 	RemoveIntcHandler(INT_TIMER0,id_TIM); // kill handler
 }
-//////////////////////////////////////////////////////////////////////////
-
-void LoadModules(void) //not used
-{
-    int ret;
-
-	ret = SifLoadModule("rom0:SIO2MAN", 0, NULL);
-	if (ret < 0) {
-		printf("Failed to load module: SIO2MAN");
-		SleepThread();
-	}
-
-	ret = SifLoadModule("rom0:MCMAN", 0, NULL);
-	if (ret < 0) {
-		printf("Failed to load module: MCMAN");
-		SleepThread();
-	}
-
-	ret = SifLoadModule("rom0:MCSERV", 0, NULL);
-	if (ret < 0) {
-		printf("Failed to load module: MCSERV");
-		SleepThread();
-	}
-   	
-
-	ret = SifLoadModule("mass:irx/ps2kbd.irx", 0, NULL);
-	if (ret < 0) {
-		printf("Failed to load module: PS2KBD");
-		//SleepThread();
-	}	
-
-	ret = SifLoadModule("mass:irx/ps2mouse.irx", 0, NULL);
-	if (ret < 0) {
-		printf("Failed to load module: PS2MOUSE");
-	//	SleepThread();
-	}
-}
-
 /*
 ===============================================================================
 
@@ -220,11 +183,10 @@ filelength
 */
 int filelength (int f)
 {
-	int pos;
 	int end;
 	
-	end = fioLseek(f,0,SEEK_END);
-	pos = fioLseek(f,0,SEEK_SET);
+	end = fileXioLseek(f, 0, SEEK_END);
+	fileXioLseek(f, 0, SEEK_SET);
 
 	return end;
 }
@@ -236,19 +198,25 @@ int Sys_FileOpenRead (char *path, int *hndl)
 	
 	i = findhandle ();
 
-	f = fioOpen(path,O_RDONLY);
-	if (!f)
+	f = fileXioOpen(path, O_RDONLY);
+	if (f < 0)
 	{
 		*hndl = -1;
 		return -1;
 	}
+
 	sys_handles[i] = f;
 	*hndl = i;
 	
-	if(filelength(f) < 0)
+	f = filelength(f);
+	if (f < 0)
+	{
+		Sys_FileClose(i);
+		*hndl = -1;
 		return -1;
+	}
 		
-	return filelength(f);
+	return f;
 }
 
 int Sys_FileOpenWrite (char *path)
@@ -258,12 +226,10 @@ int Sys_FileOpenWrite (char *path)
 	
 	i = findhandle ();
 
-	f = fioOpen(path,O_WRONLY | O_CREAT);
-	//FIXME
-	//if(!f)
-	//{
-	//	Sys_Error ("Error opening %s: %s", path,strerror(errno));
-	//}
+	f = fileXioOpen(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+	if (f < 0)
+		return -1;
+
 	sys_handles[i] = f;
 	
 	return i;
@@ -271,42 +237,41 @@ int Sys_FileOpenWrite (char *path)
 
 void Sys_FileClose (int handle)
 {
-	fioClose(sys_handles[handle]);
+	if (handle <= 0 || handle >= MAX_HANDLES || sys_handles[handle] < 0)
+		return;
+
+	fileXioClose(sys_handles[handle]);
 	sys_handles[handle] = -1;
 }
 
 void Sys_FileSeek (int handle, int position)
 {
-	fioLseek (sys_handles[handle], position, SEEK_SET);
+	fileXioLseek(sys_handles[handle], position, SEEK_SET);
 }
 
 int Sys_FileRead (int handle, void *dest, int count)
 {
-	return fioRead(sys_handles[handle], dest, count);
+	return fileXioRead(sys_handles[handle], dest, count);
 }
 
 int Sys_FileWrite (int handle, void *data, int count)
 {
-	return fioWrite(sys_handles[handle], data, count);
+	return fileXioWrite(sys_handles[handle], data, count);
 }
 
 int     Sys_FileTime (char *path)
 {
-	FILE    *f;
-	
-	f = fopen(path, "rb");
-	if (f)
-	{
-		fclose(f);
+	iox_stat_t stat;
+
+	if (fileXioGetStat(path, &stat) >= 0)
 		return 1;
-	}
 	
 	return -1;
 }
 
 void Sys_mkdir (char *path)
 {
-	fioMkdir(path);
+	fileXioMkdir(path, 0777);
 }
 
 
@@ -413,7 +378,7 @@ int main (int argc, char **argv)
 	
 	parms.memsize = 24*1024*1024;
 	parms.membase = malloc (parms.memsize);
-	parms.basedir = ".";
+	parms.basedir = "mass:";
 
 	COM_InitArgv (argc, argv);
 
