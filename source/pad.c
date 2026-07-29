@@ -133,7 +133,6 @@ int Setup_Pad(void)
 {
 	int ret, i, port, state, modes;
 
-	padReset();
 	padInit(0);
 
 	for(port=0; port<2; port++){

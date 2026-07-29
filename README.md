@@ -3,12 +3,12 @@
 An effort to restore, modernize, and stabilize the historical Quake port for
 the Sony PlayStation 2.
 
-Current version: **0.1.0 — Archive Baseline**
+Current version: **0.2.0 — Reproducible Build**
 
 The repository currently preserves the original 2004 port and its expanded
-2009 source snapshot. The code has not yet been migrated to the current
-PS2DEV toolchain and should be considered an archival development baseline,
-not a production-ready release.
+2009 source snapshot. The code now builds with a pinned current PS2DEV
+toolchain, but it has not yet completed emulator or real-hardware validation
+and should not be considered a production-ready release.
 
 ## Goals
 
@@ -42,9 +42,22 @@ The project follows [Semantic Versioning](https://semver.org/):
 
 ## Building
 
-The archived Makefiles target an obsolete PS2SDK layout and are not expected
-to build with a current toolchain. A reproducible modern build environment is
-planned for version 0.2.0.
+Python 3.9 or newer and the platform `tar` utility are required. The bootstrap
+script downloads the pinned PS2DEV snapshot, verifies every archive by
+SHA-256, and installs it under the ignored `.cache` directory:
+
+```sh
+python tools/bootstrap_ps2dev.py
+python tools/build.py --video ntsc --clean
+```
+
+Supported video selections are `ntsc`, `pal`, and `vesa`. Each build produces
+an unpacked development ELF and a packed release ELF under `build/<mode>/`.
+The archived SDL sound backend is disabled by default and can be compiled with
+`--sound`; sound is not considered stable yet.
+
+On systems with GNU Make, `make toolchain` and `make VIDEO=ntsc` provide short
+aliases for the same Python commands.
 
 ## Game data
 
