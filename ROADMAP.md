@@ -33,14 +33,16 @@ hardware testing exposes platform-specific constraints.
 
 - [x] Correct GS DMA transfer sizes and buffer alignment.
 - [x] Introduce VSync and double buffering.
-- [ ] Render at an efficient internal resolution and scale through the GS.
+- [x] Provide an efficient 320-pixel internal resolution scaled through the GS
+  while retaining the sharper 640-pixel profile.
 - [ ] Support NTSC, PAL, and 480p with correct aspect ratios.
 - [x] Eliminate tearing on the validated NTSC path.
 - [ ] Validate 60/50 Hz frame pacing across NTSC, PAL, and 480p.
 
-NTSC boot and gameplay are now validated in PCSX2 and on real hardware.
-The NTSC display origin, 320-pixel status bar, and 320-pixel menu scaling have
-also been corrected; PAL and 480p remain to be validated.
+NTSC boot and gameplay are now validated in PCSX2 and on real hardware. Both
+640x224 and hardware-scaled 320x224 profiles have been measured on both
+targets. The NTSC display origin, status bar, and menu scaling have also been
+corrected; PAL and 480p remain to be validated.
 
 ## 0.5.0 — Input
 

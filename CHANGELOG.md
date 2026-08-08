@@ -7,6 +7,25 @@ and the project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-08-08
+
+### Added
+
+- Added selectable 640-pixel quality and 320-pixel performance profiles, with
+  the latter expanded to the same NTSC display width through GS magnification.
+- Added an optional `--metrics` build profile that displays FPS and smoothed
+  frame, EE, palette-conversion, and GS/VSync timing on screen.
+- Added separate build directories for alternate internal-width and diagnostic
+  profiles so experiments do not overwrite standard release builds.
+
+### Validation
+
+- Confirmed both 640x224 and 320x224 profiles in PCSX2 and on a real
+  PlayStation 2 through LaunchELF.
+- Measured an approximately 49 percent average FPS improvement at 320x224 in
+  both environments, while identifying EE software rendering as the primary
+  remaining bottleneck.
+
 ## [0.4.1] - 2026-08-08
 
 ### Fixed
@@ -114,7 +133,8 @@ and the project follows [Semantic Versioning](https://semver.org/).
 - Repository rules excluding Quake game data, user state, prebuilt ELF files,
   binary IOP modules, and generated build products.
 
-[Unreleased]: https://github.com/alekszverr-jpg/quake1-ps2/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/alekszverr-jpg/quake1-ps2/compare/v0.4.2...HEAD
+[0.4.2]: https://github.com/alekszverr-jpg/quake1-ps2/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/alekszverr-jpg/quake1-ps2/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/alekszverr-jpg/quake1-ps2/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/alekszverr-jpg/quake1-ps2/compare/v0.2.0...v0.3.0

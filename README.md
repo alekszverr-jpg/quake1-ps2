@@ -3,7 +3,7 @@
 An effort to restore, modernize, and stabilize the historical Quake port for
 the Sony PlayStation 2.
 
-Current version: **0.4.1 — Build Reliability**
+Current version: **0.4.2 — Video Diagnostics**
 
 The repository preserves the original 2004 port and its expanded 2009 source
 snapshot. The modernized code builds with a pinned current PS2DEV toolchain
@@ -56,6 +56,18 @@ Supported video selections are `ntsc`, `pal`, and `vesa`. Each build produces
 an unpacked development ELF and a packed release ELF under `build/<mode>/`.
 The archived SDL sound backend is disabled by default and can be compiled with
 `--sound`; sound is not considered stable yet.
+
+The software renderer defaults to 640 pixels wide. A hardware-scaled
+320-pixel performance profile and an optional on-screen timing overlay are
+available for profiling:
+
+```sh
+python tools/build.py --video ntsc --internal-width 320 --metrics --clean
+```
+
+The metrics overlay reports full frame time and FPS together with time spent
+on EE game/render work, palette conversion, and GS upload/VSync. Both 640x224
+and 320x224 NTSC profiles have been validated in PCSX2 and on real hardware.
 
 On systems with GNU Make, `make toolchain` and `make VIDEO=ntsc` provide short
 aliases for the same Python commands.

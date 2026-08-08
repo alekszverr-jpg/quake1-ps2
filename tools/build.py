@@ -121,9 +121,21 @@ def parse_args() -> argparse.Namespace:
         help="video mode to compile (default: ntsc)",
     )
     parser.add_argument(
+        "--internal-width",
+        type=int,
+        choices=(320, 640),
+        default=640,
+        help="software-renderer width before GS scaling (default: 640)",
+    )
+    parser.add_argument(
         "--sound",
         action="store_true",
         help="enable the archived SDL audio backend",
+    )
+    parser.add_argument(
+        "--metrics",
+        action="store_true",
+        help="draw PS2 frame-stage timing metrics on screen",
     )
     parser.add_argument(
         "--jobs",
@@ -189,7 +201,12 @@ def main() -> int:
     ]
     env["PATH"] = os.pathsep.join(map(str, path_entries)) + os.pathsep + env["PATH"]
 
-    build_dir = ROOT / "build" / args.video
+    build_profile = args.video
+    if args.internal_width != 640:
+        build_profile = f"{args.video}-{args.internal_width}"
+    if args.metrics:
+        build_profile = f"{build_profile}-metrics"
+    build_dir = ROOT / "build" / build_profile
     object_dir = build_dir / "obj"
     generated_dir = build_dir / "generated"
     if args.clean and build_dir.exists():
@@ -216,6 +233,7 @@ def main() -> int:
         "-D_EE",
         "-DNEWLIB_PORT_AWARE",
         f"-D{VIDEO_DEFINES[args.video]}",
+        f"-DPS2_INTERNAL_WIDTH={args.internal_width}",
         "-D_IOPRESET",
         "-Dstricmp=strcasecmp",
         "-G0",
@@ -238,6 +256,8 @@ def main() -> int:
                 f"-I{ps2sdk / 'ports' / 'include' / 'SDL'}",
             ]
         )
+    if args.metrics:
+        common_flags.append("-DPS2_DIAGNOSTIC_METRICS")
 
     compile_jobs: list[tuple[Path, Path]] = []
     for index, source in enumerate(sources):

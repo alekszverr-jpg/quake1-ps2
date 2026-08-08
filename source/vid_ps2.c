@@ -35,17 +35,28 @@ viddef_t	vid;				// global video state
 static int verbose=0;
 int ignorenext;
 
+#ifndef PS2_INTERNAL_WIDTH
+#define PS2_INTERNAL_WIDTH 640
+#endif
+
+#if PS2_INTERNAL_WIDTH != 320 && PS2_INTERNAL_WIDTH != 640
+#error PS2_INTERNAL_WIDTH must be 320 or 640
+#endif
+
 #ifdef _NTSC
-#define	BASEWIDTH	640
+#define	BASEWIDTH	PS2_INTERNAL_WIDTH
 #define	BASEHEIGHT  224
+#define HORIZONTAL_MAGNIFICATION (2560 / BASEWIDTH)
 #endif
 #ifdef _VESA
-#define	BASEWIDTH	640
+#define	BASEWIDTH	PS2_INTERNAL_WIDTH
 #define	BASEHEIGHT  480
+#define HORIZONTAL_MAGNIFICATION (1280 / BASEWIDTH)
 #endif
 #ifdef _PAL //PAL
-#define	BASEWIDTH	640
+#define	BASEWIDTH	PS2_INTERNAL_WIDTH
 #define	BASEHEIGHT  265 
+#define HORIZONTAL_MAGNIFICATION (2560 / BASEWIDTH)
 #endif
 
 byte	*vid_buffer;
@@ -68,6 +79,38 @@ typedef struct
 }RGB;
 
 RGB myPalette[256];
+
+#ifdef PS2_DIAGNOSTIC_METRICS
+static float metrics_frame_ms;
+static float metrics_ee_ms;
+static float metrics_convert_ms;
+static float metrics_gs_ms;
+static float metrics_previous_frame_end;
+
+static void VID_SmoothMetric(float *average, float sample)
+{
+	if (*average == 0.0f)
+		*average = sample;
+	else
+		*average += (sample - *average) * 0.1f;
+}
+
+static void VID_DrawMetrics(void)
+{
+	char line[48];
+	float fps;
+
+	fps = metrics_frame_ms > 0.0f ? 1000.0f / metrics_frame_ms : 0.0f;
+
+	Draw_Fill(0, 0, vid.width, 18, 0);
+	snprintf(line, sizeof(line), "FPS %4.1f FRAME %4.1f %ix%i",
+		fps, metrics_frame_ms, vid.width, vid.height);
+	Draw_String(4, 1, line);
+	snprintf(line, sizeof(line), "EE %4.1f CONV %4.1f GS %4.1f",
+		metrics_ee_ms, metrics_convert_ms, metrics_gs_ms);
+	Draw_String(4, 9, line);
+}
+#endif
 
 void ResetFrameBuffer(void)
 {
@@ -151,13 +194,13 @@ void	VID_Init (unsigned char *palette)
 	 * 2560x224 display area.  The old port used y=36, which pushed the
 	 * picture down by ten scanlines and clipped the status bar on CRTs.
 	 */
-	GS_MODE mode = {2,640,224,0,32,4,652,26};//NTSC-NI (640x224)
+	GS_MODE mode = {2,BASEWIDTH,224,0,32,HORIZONTAL_MAGNIFICATION,652,26};//NTSC-NI
 	#endif
 	#ifdef _VESA
-	GS_MODE mode = {0x1C,640,480,0,32,2,356,18}; //VESA 640x480x32 75hertz
+	GS_MODE mode = {0x1C,BASEWIDTH,480,0,32,HORIZONTAL_MAGNIFICATION,356,18}; //VESA 75 Hz
     #endif
     #ifdef _PAL
-	GS_MODE mode = {3,640,480,0,32,4,656,35}; //PAL 
+	GS_MODE mode = {3,BASEWIDTH,480,0,32,HORIZONTAL_MAGNIFICATION,656,35}; //PAL
 	#endif
 	gs_init(mode);
 	fill_rect(0, 0, BASEWIDTH, BASEHEIGHT);
@@ -171,6 +214,12 @@ void	VID_Shutdown (void)
 void	VID_Update (vrect_t *rects)
 {
 	extern int scr_fullupdate;
+	#ifdef PS2_DIAGNOSTIC_METRICS
+	float convert_end;
+	float frame_end;
+	float update_start;
+	float upload_start;
+	#endif
 	int hud_source_x;
 	int hud_top;
 	int source_offset;
@@ -179,6 +228,11 @@ void	VID_Update (vrect_t *rects)
 	byte pixel;
 
 	scr_fullupdate = 0;
+
+	#ifdef PS2_DIAGNOSTIC_METRICS
+	update_start = Sys_FloatTime();
+	VID_DrawMetrics();
+	#endif
 
 	/*
 	 * Quake's status bar artwork is a fixed 320 pixels wide.  Keep the
@@ -208,7 +262,26 @@ void	VID_Update (vrect_t *rects)
 		}
 	}
 
+	#ifdef PS2_DIAGNOSTIC_METRICS
+	convert_end = Sys_FloatTime();
+	upload_start = convert_end;
+	#endif
 	put_image(0, 0, vid.width, vid.height, (uint32*)tmp);
+	#ifdef PS2_DIAGNOSTIC_METRICS
+	frame_end = Sys_FloatTime();
+	if (metrics_previous_frame_end > 0.0f)
+	{
+		VID_SmoothMetric(&metrics_frame_ms,
+			(frame_end - metrics_previous_frame_end) * 1000.0f);
+		VID_SmoothMetric(&metrics_ee_ms,
+			(update_start - metrics_previous_frame_end) * 1000.0f);
+		VID_SmoothMetric(&metrics_convert_ms,
+			(convert_end - update_start) * 1000.0f);
+		VID_SmoothMetric(&metrics_gs_ms,
+			(frame_end - upload_start) * 1000.0f);
+	}
+	metrics_previous_frame_end = frame_end;
+	#endif
 }
 
 /*
