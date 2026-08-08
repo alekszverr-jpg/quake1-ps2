@@ -128,6 +128,13 @@ def parse_args() -> argparse.Namespace:
         help="software-renderer width before GS scaling (default: 640)",
     )
     parser.add_argument(
+        "--span-block",
+        type=int,
+        choices=(8, 16),
+        default=16,
+        help="perspective-correction block size for 8-bit texture spans (default: 16)",
+    )
+    parser.add_argument(
         "--sound",
         action="store_true",
         help="enable the archived SDL audio backend",
@@ -206,6 +213,8 @@ def main() -> int:
         build_profile = f"{args.video}-{args.internal_width}"
     if args.metrics:
         build_profile = f"{build_profile}-metrics"
+    if args.span_block != 16:
+        build_profile = f"{build_profile}-span{args.span_block}"
     build_dir = ROOT / "build" / build_profile
     object_dir = build_dir / "obj"
     generated_dir = build_dir / "generated"
@@ -234,6 +243,7 @@ def main() -> int:
         "-DNEWLIB_PORT_AWARE",
         f"-D{VIDEO_DEFINES[args.video]}",
         f"-DPS2_INTERNAL_WIDTH={args.internal_width}",
+        f"-DPS2_SPAN_BLOCK={args.span_block}",
         "-D_IOPRESET",
         "-Dstricmp=strcasecmp",
         "-G0",

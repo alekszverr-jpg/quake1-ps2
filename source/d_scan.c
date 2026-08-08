@@ -92,6 +92,18 @@ void D_WarpScreen (void)
 
 #if	!id386
 
+#ifndef PS2_SPAN_BLOCK
+#define PS2_SPAN_BLOCK 16
+#endif
+
+#if PS2_SPAN_BLOCK == 16
+#define PS2_SPAN_SHIFT 4
+#elif PS2_SPAN_BLOCK == 8
+#define PS2_SPAN_SHIFT 3
+#else
+#error Unsupported PS2_SPAN_BLOCK value
+#endif
+
 /*
 =============
 D_DrawTurbulent8Span
@@ -260,16 +272,16 @@ void D_DrawSpans8 (espan_t *pspan)
 	unsigned char	*pbase, *pdest;
 	fixed16_t		s, t, snext, tnext, sstep, tstep;
 	float			sdivz, tdivz, zi, z, du, dv, spancountminus1;
-	float			sdivz8stepu, tdivz8stepu, zi8stepu;
+	float			sdivzblockstepu, tdivzblockstepu, ziblockstepu;
 
 	sstep = 0;	// keep compiler happy
 	tstep = 0;	// ditto
 
 	pbase = (unsigned char *)cacheblock;
 
-	sdivz8stepu = d_sdivzstepu * 8;
-	tdivz8stepu = d_tdivzstepu * 8;
-	zi8stepu = d_zistepu * 8;
+	sdivzblockstepu = d_sdivzstepu * PS2_SPAN_BLOCK;
+	tdivzblockstepu = d_tdivzstepu * PS2_SPAN_BLOCK;
+	ziblockstepu = d_zistepu * PS2_SPAN_BLOCK;
 
 	do
 	{
@@ -302,8 +314,8 @@ void D_DrawSpans8 (espan_t *pspan)
 		do
 		{
 		// calculate s and t at the far end of the span
-			if (count >= 8)
-				spancount = 8;
+			if (count >= PS2_SPAN_BLOCK)
+				spancount = PS2_SPAN_BLOCK;
 			else
 				spancount = count;
 
@@ -313,27 +325,27 @@ void D_DrawSpans8 (espan_t *pspan)
 			{
 			// calculate s/z, t/z, zi->fixed s and t at far end of span,
 			// calculate s and t steps across span by shifting
-				sdivz += sdivz8stepu;
-				tdivz += tdivz8stepu;
-				zi += zi8stepu;
+				sdivz += sdivzblockstepu;
+				tdivz += tdivzblockstepu;
+				zi += ziblockstepu;
 				z = (float)0x10000 / zi;	// prescale to 16.16 fixed-point
 
 				snext = (int)(sdivz * z) + sadjust;
 				if (snext > bbextents)
 					snext = bbextents;
-				else if (snext < 8)
-					snext = 8;	// prevent round-off error on <0 steps from
+				else if (snext < PS2_SPAN_BLOCK)
+					snext = PS2_SPAN_BLOCK;	// prevent round-off error on <0 steps from
 								//  from causing overstepping & running off the
 								//  edge of the texture
 
 				tnext = (int)(tdivz * z) + tadjust;
 				if (tnext > bbextentt)
 					tnext = bbextentt;
-				else if (tnext < 8)
-					tnext = 8;	// guard against round-off error on <0 steps
+				else if (tnext < PS2_SPAN_BLOCK)
+					tnext = PS2_SPAN_BLOCK;	// guard against round-off error on <0 steps
 
-				sstep = (snext - s) >> 3;
-				tstep = (tnext - t) >> 3;
+				sstep = (snext - s) >> PS2_SPAN_SHIFT;
+				tstep = (tnext - t) >> PS2_SPAN_SHIFT;
 			}
 			else
 			{
@@ -349,16 +361,16 @@ void D_DrawSpans8 (espan_t *pspan)
 				snext = (int)(sdivz * z) + sadjust;
 				if (snext > bbextents)
 					snext = bbextents;
-				else if (snext < 8)
-					snext = 8;	// prevent round-off error on <0 steps from
+				else if (snext < PS2_SPAN_BLOCK)
+					snext = PS2_SPAN_BLOCK;	// prevent round-off error on <0 steps from
 								//  from causing overstepping & running off the
 								//  edge of the texture
 
 				tnext = (int)(tdivz * z) + tadjust;
 				if (tnext > bbextentt)
 					tnext = bbextentt;
-				else if (tnext < 8)
-					tnext = 8;	// guard against round-off error on <0 steps
+				else if (tnext < PS2_SPAN_BLOCK)
+					tnext = PS2_SPAN_BLOCK;	// guard against round-off error on <0 steps
 
 				if (spancount > 1)
 				{
@@ -398,7 +410,12 @@ void D_DrawZSpans (espan_t *pspan)
 	int				izi;
 	short			*pdest;
 	unsigned		ltemp;
-	double			zi;
+	/*
+	 * All depth gradients are floats and the destination is a 16-bit Z value.
+	 * Keeping this temporary as double only adds software-emulated FP64 work on
+	 * the R5900 without preserving any useful source precision.
+	 */
+	float			zi;
 	float			du, dv;
 
 // FIXME: check for clamping/range problems

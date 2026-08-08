@@ -137,6 +137,12 @@ cvar_t	r_numedges = {"r_numedges", "0"};
 cvar_t	r_aliastransbase = {"r_aliastransbase", "200"};
 cvar_t	r_aliastransadj = {"r_aliastransadj", "100"};
 
+#ifdef PS2_DIAGNOSTIC_METRICS
+#define R_COLLECT_DETAILED_TIMINGS() true
+#else
+#define R_COLLECT_DETAILED_TIMINGS() (r_dspeeds.value)
+#endif
+
 extern cvar_t	scr_fov;
 
 void CreatePassages (void);
@@ -903,7 +909,7 @@ void R_EdgeDrawing (void)
 
 	R_BeginEdgeFrame ();
 
-	if (r_dspeeds.value)
+	if (R_COLLECT_DETAILED_TIMINGS())
 	{
 		rw_time1 = Sys_FloatTime ();
 	}
@@ -917,7 +923,7 @@ void R_EdgeDrawing (void)
 // z writes, so have the driver turn z compares on now
 	D_TurnZOn ();
 
-	if (r_dspeeds.value)
+	if (R_COLLECT_DETAILED_TIMINGS())
 	{
 		rw_time2 = Sys_FloatTime ();
 		db_time1 = rw_time2;
@@ -925,7 +931,7 @@ void R_EdgeDrawing (void)
 
 	R_DrawBEntitiesOnList ();
 
-	if (r_dspeeds.value)
+	if (R_COLLECT_DETAILED_TIMINGS())
 	{
 		db_time2 = Sys_FloatTime ();
 		se_time1 = db_time2;
@@ -992,7 +998,7 @@ SetVisibilityByPassages ();
 		VID_LockBuffer ();
 	}
 	
-	if (r_dspeeds.value)
+	if (R_COLLECT_DETAILED_TIMINGS())
 	{
 		se_time2 = Sys_FloatTime ();
 		de_time1 = se_time2;
@@ -1000,7 +1006,7 @@ SetVisibilityByPassages ();
 
 	R_DrawEntitiesOnList ();
 
-	if (r_dspeeds.value)
+	if (R_COLLECT_DETAILED_TIMINGS())
 	{
 		de_time2 = Sys_FloatTime ();
 		dv_time1 = de_time2;
@@ -1008,7 +1014,7 @@ SetVisibilityByPassages ();
 
 	R_DrawViewModel ();
 
-	if (r_dspeeds.value)
+	if (R_COLLECT_DETAILED_TIMINGS())
 	{
 		dv_time2 = Sys_FloatTime ();
 		dp_time1 = Sys_FloatTime ();
@@ -1016,7 +1022,7 @@ SetVisibilityByPassages ();
 
 	R_DrawParticles ();
 
-	if (r_dspeeds.value)
+	if (R_COLLECT_DETAILED_TIMINGS())
 		dp_time2 = Sys_FloatTime ();
 
 	if (r_dowarp)

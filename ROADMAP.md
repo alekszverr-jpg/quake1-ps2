@@ -38,6 +38,7 @@ hardware testing exposes platform-specific constraints.
 - [ ] Support NTSC, PAL, and 480p with correct aspect ratios.
 - [x] Eliminate tearing on the validated NTSC path.
 - [ ] Validate 60/50 Hz frame pacing across NTSC, PAL, and 480p.
+- [ ] Correct sky-texture movement when camera pitch changes.
 
 NTSC boot and gameplay are now validated in PCSX2 and on real hardware. Both
 640x224 and hardware-scaled 320x224 profiles have been measured on both
@@ -69,7 +70,8 @@ corrected; PAL and 480p remain to be validated.
 ## 0.8.0 — Performance and Compatibility
 
 - [ ] Profile representative maps on real hardware.
-- [ ] Optimize palette conversion and framebuffer uploads.
+- [x] Optimize indexed palette conversion before framebuffer uploads.
+- [x] Reduce software renderer Z-span and perspective-correction costs.
 - [ ] Reduce renderer stalls and unnecessary full-frame work.
 - [ ] Run long-session, save/load, demo, and map-transition tests.
 

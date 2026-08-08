@@ -35,6 +35,21 @@ extern void			R_TransformFrustum (void);
 
 vec3_t		transformed_modelorg;
 
+#ifdef PS2_DIAGNOSTIC_METRICS
+float ps2_surface_cache_time;
+float ps2_surface_color_time;
+float ps2_surface_z_time;
+
+#define PS2_TIME_SURFACE(accumulator, call) \
+	do { \
+		float ps2_time_start = Sys_FloatTime (); \
+		call; \
+		accumulator += Sys_FloatTime () - ps2_time_start; \
+	} while (0)
+#else
+#define PS2_TIME_SURFACE(accumulator, call) call
+#endif
+
 /*
 ==============
 D_DrawPoly
@@ -195,8 +210,9 @@ void D_DrawSurfaces (void)
 			d_zistepv = s->d_zistepv;
 			d_ziorigin = s->d_ziorigin;
 
-			D_DrawSolidSurface (s, (int)s->data & 0xFF);
-			D_DrawZSpans (s->spans);
+			PS2_TIME_SURFACE (ps2_surface_color_time,
+				D_DrawSolidSurface (s, (int)s->data & 0xFF));
+			PS2_TIME_SURFACE (ps2_surface_z_time, D_DrawZSpans (s->spans));
 		}
 	}
 	else
@@ -219,8 +235,9 @@ void D_DrawSurfaces (void)
 					R_MakeSky ();
 				}
 
-				D_DrawSkyScans8 (s->spans);
-				D_DrawZSpans (s->spans);
+				PS2_TIME_SURFACE (ps2_surface_color_time,
+					D_DrawSkyScans8 (s->spans));
+				PS2_TIME_SURFACE (ps2_surface_z_time, D_DrawZSpans (s->spans));
 			}
 			else if (s->flags & SURF_DRAWBACKGROUND)
 			{
@@ -230,8 +247,9 @@ void D_DrawSurfaces (void)
 				d_zistepv = 0;
 				d_ziorigin = -0.9;
 
-				D_DrawSolidSurface (s, (int)r_clearcolor.value & 0xFF);
-				D_DrawZSpans (s->spans);
+				PS2_TIME_SURFACE (ps2_surface_color_time,
+					D_DrawSolidSurface (s, (int)r_clearcolor.value & 0xFF));
+				PS2_TIME_SURFACE (ps2_surface_z_time, D_DrawZSpans (s->spans));
 			}
 			else if (s->flags & SURF_DRAWTURB)
 			{
@@ -257,8 +275,9 @@ void D_DrawSurfaces (void)
 				}
 
 				D_CalcGradients (pface);
-				Turbulent8 (s->spans);
-				D_DrawZSpans (s->spans);
+				PS2_TIME_SURFACE (ps2_surface_color_time,
+					Turbulent8 (s->spans));
+				PS2_TIME_SURFACE (ps2_surface_z_time, D_DrawZSpans (s->spans));
 
 				if (s->insubmodel)
 				{
@@ -297,16 +316,25 @@ void D_DrawSurfaces (void)
 				* pface->texinfo->mipadjust);
 
 			// FIXME: make this passed in to D_CacheSurface
+			#ifdef PS2_DIAGNOSTIC_METRICS
+				{
+					float ps2_time_start = Sys_FloatTime ();
+					pcurrentcache = D_CacheSurface (pface, miplevel);
+					ps2_surface_cache_time += Sys_FloatTime () - ps2_time_start;
+				}
+			#else
 				pcurrentcache = D_CacheSurface (pface, miplevel);
+			#endif
 
 				cacheblock = (pixel_t *)pcurrentcache->data;
 				cachewidth = pcurrentcache->width;
 
 				D_CalcGradients (pface);
 
-				(*d_drawspans) (s->spans);
+				PS2_TIME_SURFACE (ps2_surface_color_time,
+					(*d_drawspans) (s->spans));
 
-				D_DrawZSpans (s->spans);
+				PS2_TIME_SURFACE (ps2_surface_z_time, D_DrawZSpans (s->spans));
 
 				if (s->insubmodel)
 				{

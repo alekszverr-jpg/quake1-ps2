@@ -71,14 +71,12 @@ unsigned short	d_8to16table[256];
 
 static uint32 tmp[BASEWIDTH*BASEHEIGHT] __attribute__((aligned(64)));
 
-typedef struct
-{
-	char red;
-	char green;
-	char blue;
-}RGB;
-
-RGB myPalette[256];
+/*
+ * The software renderer produces 8-bit palette indices.  Keep the palette in
+ * the exact 32-bit format expected by the GS upload buffer so VID_Update only
+ * needs one indexed load per pixel instead of rebuilding RGBA every frame.
+ */
+static uint32 palette32[256];
 
 #ifdef PS2_DIAGNOSTIC_METRICS
 static float metrics_frame_ms;
@@ -86,6 +84,29 @@ static float metrics_ee_ms;
 static float metrics_convert_ms;
 static float metrics_gs_ms;
 static float metrics_previous_frame_end;
+static float metrics_world_ms;
+static float metrics_bmodel_ms;
+static float metrics_scan_ms;
+static float metrics_edge_ms;
+static float metrics_surface_ms;
+static float metrics_surface_cache_ms;
+static float metrics_surface_color_ms;
+static float metrics_surface_z_ms;
+static float metrics_entities_ms;
+static float metrics_viewmodel_ms;
+static float metrics_particles_ms;
+static float metrics_other_ms;
+
+extern float dp_time1, dp_time2;
+extern float db_time1, db_time2;
+extern float rw_time1, rw_time2;
+extern float se_time1, se_time2;
+extern float de_time1, de_time2;
+extern float dv_time1, dv_time2;
+extern float ps2_surface_draw_time;
+extern float ps2_surface_cache_time;
+extern float ps2_surface_color_time;
+extern float ps2_surface_z_time;
 
 static void VID_SmoothMetric(float *average, float sample)
 {
@@ -99,16 +120,35 @@ static void VID_DrawMetrics(void)
 {
 	char line[48];
 	float fps;
+	float render_ms;
 
 	fps = metrics_frame_ms > 0.0f ? 1000.0f / metrics_frame_ms : 0.0f;
+	render_ms = metrics_world_ms + metrics_bmodel_ms + metrics_scan_ms +
+		metrics_entities_ms + metrics_viewmodel_ms + metrics_particles_ms;
 
-	Draw_Fill(0, 0, vid.width, 18, 0);
+	Draw_Fill(0, 0, vid.width, 58, 0);
 	snprintf(line, sizeof(line), "FPS %4.1f FRAME %4.1f %ix%i",
 		fps, metrics_frame_ms, vid.width, vid.height);
 	Draw_String(4, 1, line);
-	snprintf(line, sizeof(line), "EE %4.1f CONV %4.1f GS %4.1f",
-		metrics_ee_ms, metrics_convert_ms, metrics_gs_ms);
+	snprintf(line, sizeof(line), "EE %4.1f REN %4.1f OTH %4.1f",
+		metrics_ee_ms, render_ms, metrics_other_ms);
 	Draw_String(4, 9, line);
+	snprintf(line, sizeof(line), "WLD %4.1f BMD %4.1f SCN %4.1f",
+		metrics_world_ms, metrics_bmodel_ms, metrics_scan_ms);
+	Draw_String(4, 17, line);
+	snprintf(line, sizeof(line), "ENT %4.1f GUN %4.1f PRT %4.1f",
+		metrics_entities_ms, metrics_viewmodel_ms, metrics_particles_ms);
+	Draw_String(4, 25, line);
+	snprintf(line, sizeof(line), "EDG %4.1f SUR %4.1f",
+		metrics_edge_ms, metrics_surface_ms);
+	Draw_String(4, 33, line);
+	snprintf(line, sizeof(line), "CAC %4.1f COL %4.1f ZBF %4.1f",
+		metrics_surface_cache_ms, metrics_surface_color_ms,
+		metrics_surface_z_ms);
+	Draw_String(4, 41, line);
+	snprintf(line, sizeof(line), "CONV %4.1f GS %4.1f",
+		metrics_convert_ms, metrics_gs_ms);
+	Draw_String(4, 49, line);
 }
 #endif
 
@@ -149,9 +189,11 @@ void VID_SetPalette (unsigned char *palette)
 	int i;
 	for (i=0 ; i<256 ; i++)
 	{
-		myPalette[i].red = palette[i*3] * 257;
-		myPalette[i].green = palette[i*3+1] * 257;
-		myPalette[i].blue = palette[i*3+2] * 257;
+		palette32[i] =
+			((uint32)palette[i*3]       << 0)  |
+			((uint32)palette[i*3+1]     << 8)  |
+			((uint32)palette[i*3+2]     << 16) |
+			((uint32)255                << 24);
 	}
 }
 
@@ -254,11 +296,7 @@ void	VID_Update (vrect_t *rects)
 				source_offset = y * vid.rowbytes + x;
 
 			pixel = vid.buffer[source_offset];
-			tmp[y * vid.width + x] =
-				((uint8)(myPalette[pixel].red)   << 0)  |
-				((uint8)(myPalette[pixel].green) << 8)  |
-				((uint8)(myPalette[pixel].blue)  << 16) |
-				((uint8)(255)                    << 24);
+			tmp[y * vid.width + x] = palette32[pixel];
 		}
 	}
 
@@ -271,14 +309,57 @@ void	VID_Update (vrect_t *rects)
 	frame_end = Sys_FloatTime();
 	if (metrics_previous_frame_end > 0.0f)
 	{
+		float bmodel_ms;
+		float cache_ms;
+		float color_ms;
+		float ee_ms;
+		float entities_ms;
+		float particles_ms;
+		float render_ms;
+		float scan_ms;
+		float edge_ms;
+		float surface_ms;
+		float viewmodel_ms;
+		float world_ms;
+		float z_ms;
+
+		ee_ms = (update_start - metrics_previous_frame_end) * 1000.0f;
+		world_ms = (rw_time2 - rw_time1) * 1000.0f;
+		bmodel_ms = (db_time2 - db_time1) * 1000.0f;
+		scan_ms = (se_time2 - se_time1) * 1000.0f;
+		surface_ms = ps2_surface_draw_time * 1000.0f;
+		cache_ms = ps2_surface_cache_time * 1000.0f;
+		color_ms = ps2_surface_color_time * 1000.0f;
+		z_ms = ps2_surface_z_time * 1000.0f;
+		edge_ms = scan_ms - surface_ms;
+		if (edge_ms < 0.0f)
+			edge_ms = 0.0f;
+		entities_ms = (de_time2 - de_time1) * 1000.0f;
+		viewmodel_ms = (dv_time2 - dv_time1) * 1000.0f;
+		particles_ms = (dp_time2 - dp_time1) * 1000.0f;
+		render_ms = world_ms + bmodel_ms + scan_ms + entities_ms +
+			viewmodel_ms + particles_ms;
+
 		VID_SmoothMetric(&metrics_frame_ms,
 			(frame_end - metrics_previous_frame_end) * 1000.0f);
-		VID_SmoothMetric(&metrics_ee_ms,
-			(update_start - metrics_previous_frame_end) * 1000.0f);
+		VID_SmoothMetric(&metrics_ee_ms, ee_ms);
 		VID_SmoothMetric(&metrics_convert_ms,
 			(convert_end - update_start) * 1000.0f);
 		VID_SmoothMetric(&metrics_gs_ms,
 			(frame_end - upload_start) * 1000.0f);
+		VID_SmoothMetric(&metrics_world_ms, world_ms);
+		VID_SmoothMetric(&metrics_bmodel_ms, bmodel_ms);
+		VID_SmoothMetric(&metrics_scan_ms, scan_ms);
+		VID_SmoothMetric(&metrics_edge_ms, edge_ms);
+		VID_SmoothMetric(&metrics_surface_ms, surface_ms);
+		VID_SmoothMetric(&metrics_surface_cache_ms, cache_ms);
+		VID_SmoothMetric(&metrics_surface_color_ms, color_ms);
+		VID_SmoothMetric(&metrics_surface_z_ms, z_ms);
+		VID_SmoothMetric(&metrics_entities_ms, entities_ms);
+		VID_SmoothMetric(&metrics_viewmodel_ms, viewmodel_ms);
+		VID_SmoothMetric(&metrics_particles_ms, particles_ms);
+		VID_SmoothMetric(&metrics_other_ms,
+			ee_ms > render_ms ? ee_ms - render_ms : 0.0f);
 	}
 	metrics_previous_frame_end = frame_end;
 	#endif

@@ -660,6 +660,21 @@ Output:
 Each surface has a linked list of its visible spans
 ==============
 */
+#ifdef PS2_DIAGNOSTIC_METRICS
+float ps2_surface_draw_time;
+extern float ps2_surface_cache_time;
+extern float ps2_surface_color_time;
+extern float ps2_surface_z_time;
+
+static void R_DrawSurfacesTimed (void)
+{
+	float start = Sys_FloatTime ();
+
+	D_DrawSurfaces ();
+	ps2_surface_draw_time += Sys_FloatTime () - start;
+}
+#endif
+
 void R_ScanEdges (void)
 {
 	int		iv, bottom;
@@ -672,6 +687,13 @@ void R_ScanEdges (void)
 	max_span_p = &basespan_p[MAXSPANS - r_refdef.vrect.width];
 
 	span_p = basespan_p;
+
+#ifdef PS2_DIAGNOSTIC_METRICS
+	ps2_surface_draw_time = 0.0f;
+	ps2_surface_cache_time = 0.0f;
+	ps2_surface_color_time = 0.0f;
+	ps2_surface_z_time = 0.0f;
+#endif
 
 // clear active edges to just the background edges around the whole screen
 // FIXME: most of this only needs to be set up once
@@ -734,7 +756,11 @@ void R_ScanEdges (void)
 			}
 			else
 			{
+			#ifdef PS2_DIAGNOSTIC_METRICS
+				R_DrawSurfacesTimed ();
+			#else
 				D_DrawSurfaces ();
+			#endif
 			}
 
 		// clear the surface span pointers
@@ -768,7 +794,13 @@ void R_ScanEdges (void)
 	if (r_drawculledpolys)
 		R_DrawCulledPolys ();
 	else
+	{
+	#ifdef PS2_DIAGNOSTIC_METRICS
+		R_DrawSurfacesTimed ();
+	#else
 		D_DrawSurfaces ();
+	#endif
+	}
 }
 
 

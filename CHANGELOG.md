@@ -7,6 +7,45 @@ and the project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.3] - 2026-08-09
+
+### Added
+
+- Expanded the optional metrics overlay with separate world, brush-model,
+  edge, surface, cache, color-span, Z-buffer, entity, view-model, particle,
+  palette-conversion, and GS timings.
+- Added `--span-block 8|16` so the software renderer's perspective-correction
+  interval can be compared without source changes.
+
+### Changed
+
+- Use a precomputed 32-bit GS palette table instead of reconstructing RGBA for
+  every framebuffer pixel.
+- Use single-precision depth interpolation in `D_DrawZSpans`; the source
+  gradients are already floats and the destination Z buffer is 16-bit.
+- Make the PCSX2-validated 16-pixel span block the default after comparison
+  against the original 8-pixel interval showed no noticeable distortion.
+- Keep detailed renderer instrumentation out of ordinary release builds.
+
+### Performance
+
+- Reduced measured palette-conversion time by roughly 31–35 percent.
+- Reduced measured Z-span time by roughly 66–80 percent.
+- Reduced stable color-span time by roughly 9–16 percent with the 16-pixel
+  correction block; the best sampled 320x224 scene increased from about
+  20 FPS to about 26 FPS.
+
+### Known issues
+
+- Sky textures can appear to shift when camera pitch changes. The behavior
+  predates these renderer optimizations and is tracked separately.
+
+### Validation
+
+- Compared 640x224 and 320x224 diagnostic builds across the same three PCSX2
+  scenes, including both 8- and 16-pixel span blocks.
+- Confirmed no noticeable rendering regressions in the tested span-16 scenes.
+
 ## [0.4.2] - 2026-08-08
 
 ### Added
@@ -133,7 +172,8 @@ and the project follows [Semantic Versioning](https://semver.org/).
 - Repository rules excluding Quake game data, user state, prebuilt ELF files,
   binary IOP modules, and generated build products.
 
-[Unreleased]: https://github.com/alekszverr-jpg/quake1-ps2/compare/v0.4.2...HEAD
+[Unreleased]: https://github.com/alekszverr-jpg/quake1-ps2/compare/v0.4.3...HEAD
+[0.4.3]: https://github.com/alekszverr-jpg/quake1-ps2/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/alekszverr-jpg/quake1-ps2/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/alekszverr-jpg/quake1-ps2/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/alekszverr-jpg/quake1-ps2/compare/v0.3.0...v0.4.0
