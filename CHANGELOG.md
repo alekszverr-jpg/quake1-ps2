@@ -7,6 +7,16 @@ and the project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Added the first `v0.5.0` experimental GS-renderer build profile through
+  `tools/build.py --renderer gs`; the software renderer remains the default.
+- Added load-time conversion of convex Quake BSP faces into persistent
+  GS-ready polygons containing positions, normalized base-texture coordinates,
+  local lightmap coordinates, and triangle-fan counts.
+- Added BSP mesh statistics for validating the new representation before
+  hardware triangle submission is enabled.
+
 ## [0.4.3] - 2026-08-09
 
 ### Added

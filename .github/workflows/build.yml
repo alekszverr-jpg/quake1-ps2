@@ -37,6 +37,9 @@ jobs:
       - name: Build NTSC
         run: python tools/build.py --video ntsc --clean --jobs 2
 
+      - name: Build experimental NTSC GS profile
+        run: python tools/build.py --video ntsc --renderer gs --clean --jobs 2
+
       - name: Build PAL
         run: python tools/build.py --video pal --clean --jobs 2
 

@@ -121,6 +121,12 @@ def parse_args() -> argparse.Namespace:
         help="video mode to compile (default: ntsc)",
     )
     parser.add_argument(
+        "--renderer",
+        choices=("software", "gs"),
+        default="software",
+        help="renderer profile; gs enables the experimental BSP mesh path",
+    )
+    parser.add_argument(
         "--internal-width",
         type=int,
         choices=(320, 640),
@@ -209,8 +215,10 @@ def main() -> int:
     env["PATH"] = os.pathsep.join(map(str, path_entries)) + os.pathsep + env["PATH"]
 
     build_profile = args.video
+    if args.renderer != "software":
+        build_profile = f"{build_profile}-{args.renderer}"
     if args.internal_width != 640:
-        build_profile = f"{args.video}-{args.internal_width}"
+        build_profile = f"{build_profile}-{args.internal_width}"
     if args.metrics:
         build_profile = f"{build_profile}-metrics"
     if args.span_block != 16:
@@ -231,6 +239,8 @@ def main() -> int:
         generated_sources.append(output)
 
     sources = [SOURCE_DIR / item for item in BASE_SOURCES]
+    if args.renderer == "gs":
+        sources.append(SOURCE_DIR / "ps2_gs_mesh.c")
     if args.sound:
         sources.extend(SOURCE_DIR / item for item in SOUND_SOURCES)
     else:
@@ -268,6 +278,8 @@ def main() -> int:
         )
     if args.metrics:
         common_flags.append("-DPS2_DIAGNOSTIC_METRICS")
+    if args.renderer == "gs":
+        common_flags.append("-DPS2_EXPERIMENTAL_GS")
 
     compile_jobs: list[tuple[Path, Path]] = []
     for index, source in enumerate(sources):

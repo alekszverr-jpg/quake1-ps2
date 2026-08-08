@@ -3,7 +3,9 @@
 An effort to restore, modernize, and stabilize the historical Quake port for
 the Sony PlayStation 2.
 
-Current version: **0.4.3 — Software Renderer Performance**
+Current release: **0.4.3 — Software Renderer Performance**
+
+Current development milestone: **0.5.0 — Experimental GS Renderer**
 
 The repository preserves the original 2004 port and its expanded 2009 source
 snapshot. The modernized code builds with a pinned current PS2DEV toolchain
@@ -28,6 +30,8 @@ See [ROADMAP.md](ROADMAP.md) for the planned milestones and
 - `source/` — the most complete source snapshot, dated 2009.
 - `source/sys_ps2.c` — PS2 entry point, timing, and system services.
 - `source/vid_ps2.c` and `source/ps2_gs.c` — software framebuffer and GS DMA.
+- `source/ps2_gs_mesh.c` — experimental GLQuake-style BSP polygon extraction
+  for the v0.5.0 hardware GS renderer.
 - `source/in_ps2.c` and `source/pad.c` — keyboard, mouse, and gamepad input.
 - `source/ps2.c` — IOP reset and module loading.
 - Root-level PS2 files — the earlier 2004 implementation and patch.
@@ -71,6 +75,16 @@ collect these detailed timings. The renderer uses a validated 16-pixel
 perspective-correction block by default; `--span-block 8` retains the original
 more conservative sampling interval for comparison. Both 640x224 and 320x224
 NTSC profiles have been validated in PCSX2 and on real hardware.
+
+The opt-in v0.5.0 profile additionally builds GLQuake-style BSP polygons for
+the experimental hardware renderer while retaining software presentation:
+
+```sh
+python tools/build.py --video ntsc --renderer gs --clean
+```
+
+This bootstrap profile is intended for development validation and does not
+yet provide hardware-rendered gameplay.
 
 On systems with GNU Make, `make toolchain` and `make VIDEO=ntsc` provide short
 aliases for the same Python commands.

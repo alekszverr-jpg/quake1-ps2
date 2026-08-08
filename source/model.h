@@ -99,6 +99,8 @@ typedef struct
 	int			flags;
 } mtexinfo_t;
 
+struct ps2_gs_poly_s;
+
 typedef struct msurface_s
 {
 	int			visframe;		// should be drawn when node is crossed
@@ -123,6 +125,11 @@ typedef struct msurface_s
 // lighting info
 	byte		styles[MAXLIGHTMAPS];
 	byte		*samples;		// [numstyles*surfsize]
+
+#ifdef PS2_EXPERIMENTAL_GS
+	/* Permanent BSP polygon generated once for the experimental GS path. */
+	struct ps2_gs_poly_s *ps2_gs_poly;
+#endif
 } msurface_t;
 
 typedef struct mnode_s

@@ -23,6 +23,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // on the same machine.
 
 #include "quakedef.h"
+
+#ifdef PS2_EXPERIMENTAL_GS
+#include "ps2_gs_mesh.h"
+#endif
 #include "r_local.h"
 
 model_t	*loadmodel;
@@ -795,6 +799,10 @@ void Mod_LoadFaces (lump_t *l)
 		out->texinfo = loadmodel->texinfo + LittleShort (in->texinfo);
 
 		CalcSurfaceExtents (out);
+
+#ifdef PS2_EXPERIMENTAL_GS
+		PS2_GS_BuildSurfaceMesh(loadmodel, out);
+#endif
 				
 	// lighting info
 
@@ -1147,6 +1155,10 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
 	dmodel_t 	*bm;
 	
 	loadmodel->type = mod_brush;
+
+#ifdef PS2_EXPERIMENTAL_GS
+	PS2_GS_ResetMeshStats();
+#endif
 	
 	header = (dheader_t *)buffer;
 
@@ -1177,6 +1189,15 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
 	Mod_LoadClipnodes (&header->lumps[LUMP_CLIPNODES]);
 	Mod_LoadEntities (&header->lumps[LUMP_ENTITIES]);
 	Mod_LoadSubmodels (&header->lumps[LUMP_MODELS]);
+
+#ifdef PS2_EXPERIMENTAL_GS
+	{
+		const ps2_gs_mesh_stats_t *stats = PS2_GS_GetMeshStats();
+		Con_DPrintf("GS mesh: %d surfaces, %d vertices, %d triangles, %d KB\n",
+			stats->surfaces, stats->vertices, stats->triangles,
+			(stats->bytes + 1023) / 1024);
+	}
+#endif
 
 	Mod_MakeHull0 ();
 	

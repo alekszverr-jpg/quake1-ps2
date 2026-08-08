@@ -45,7 +45,28 @@ NTSC boot and gameplay are now validated in PCSX2 and on real hardware. Both
 targets. The NTSC display origin, status bar, and menu scaling have also been
 corrected; PAL and 480p remain to be validated.
 
-## 0.5.0 — Input
+## 0.5.0 — Experimental GS Renderer
+
+- [x] Add a separate experimental build profile while preserving the software
+  renderer as the default and fallback.
+- [x] Convert Quake BSP faces into persistent GS-ready convex polygons with
+  base-texture and local lightmap coordinates.
+- [ ] Stream 8-bit Quake textures to GS VRAM through a shared palette CLUT.
+- [ ] Traverse the visible BSP and batch world polygons by texture.
+- [ ] Transform and submit textured triangle fans through VU1/GIF.
+- [ ] Add a GS depth buffer and hardware depth testing.
+- [ ] Upload and blend static and dynamic lightmaps.
+- [ ] Port sky, turbulent water, alias models, sprites, particles, and the
+  view model, retaining the software path until feature parity is reached.
+- [ ] Compare image correctness and frame timings in PCSX2 and on real PS2
+  hardware before making the GS renderer the default.
+
+The first v0.5.0 increment is a hybrid bootstrap: `--renderer gs` validates
+the new BSP polygon representation while the proven software renderer still
+produces the displayed frame. Hardware submission will replace individual
+passes incrementally.
+
+## 0.6.0 — Input
 
 - [ ] Implement stateful DualShock 2 button handling.
 - [ ] Add analog movement, analog look, dead zones, and sensitivity controls.
@@ -53,21 +74,21 @@ corrected; PAL and 480p remain to be validated.
 - [ ] Preserve optional USB keyboard and mouse support.
 - [ ] Add configurable bindings with sensible PS2 defaults.
 
-## 0.6.0 — Audio
+## 0.7.0 — Audio
 
 - [ ] Replace or validate the archived SDL audio backend.
 - [ ] Stabilize DMA mixing, latency, and shutdown behavior.
 - [ ] Add volume controls and underrun diagnostics.
 - [ ] Decide and document the supported music playback path.
 
-## 0.7.0 — Storage and Game Content
+## 0.8.0 — Storage and Game Content
 
 - [x] Validate USB mass-storage loading on real hardware.
 - [ ] Add memory-card save support with clear failure messages.
 - [ ] Validate shareware and registered data layouts.
 - [ ] Support command-line mods without hard-coded device paths.
 
-## 0.8.0 — Performance and Compatibility
+## 0.9.0 — Performance and Compatibility
 
 - [ ] Profile representative maps on real hardware.
 - [x] Optimize indexed palette conversion before framebuffer uploads.
@@ -75,7 +96,7 @@ corrected; PAL and 480p remain to be validated.
 - [ ] Reduce renderer stalls and unnecessary full-frame work.
 - [ ] Run long-session, save/load, demo, and map-transition tests.
 
-## 0.9.0 — Release Candidate
+## 0.10.0 — Release Candidate
 
 - [ ] Test on multiple PS2 revisions and common launch methods.
 - [ ] Complete NTSC, PAL, and 480p compatibility matrices.
