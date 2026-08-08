@@ -282,6 +282,7 @@ def main() -> int:
         "-lfileXio",
         "-lpatches",
         "-ldebug",
+        "-lgraph",
         "-ldma",
         "-lm",
         "-lc",

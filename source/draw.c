@@ -506,6 +506,164 @@ void Draw_TransPicTranslate (int x, int y, qpic_t *pic, byte *translation)
 }
 
 
+/*
+================
+Draw_CharacterX2
+
+Draws an 8*8 character twice as wide.  The PS2 renderer uses a 640-pixel
+framebuffer while the original menu layout is expressed in 320-pixel
+coordinates.
+================
+*/
+void Draw_CharacterX2 (int x, int y, int num)
+{
+	byte			*dest;
+	byte			*source;
+	unsigned short	*pusdest;
+	int				drawline;
+	int				row, col, u;
+
+	num &= 255;
+
+	if (y <= -8)
+		return;
+
+#ifdef PARANOID
+	if (y > vid.height - 8 || x < 0 || x > vid.width - 16)
+		Sys_Error ("Draw_CharacterX2: (%i, %i)", x, y);
+#endif
+
+	row = num >> 4;
+	col = num & 15;
+	source = draw_chars + (row << 10) + (col << 3);
+
+	if (y < 0)
+	{
+		drawline = 8 + y;
+		source -= 128 * y;
+		y = 0;
+	}
+	else
+		drawline = 8;
+
+	if (r_pixbytes == 1)
+	{
+		dest = vid.conbuffer + y * vid.conrowbytes + x;
+
+		while (drawline--)
+		{
+			for (u = 0; u < 8; u++)
+			{
+				if (source[u])
+				{
+					dest[u * 2] = source[u];
+					dest[u * 2 + 1] = source[u];
+				}
+			}
+			source += 128;
+			dest += vid.conrowbytes;
+		}
+	}
+	else
+	{
+		pusdest = (unsigned short *)
+			((byte *)vid.conbuffer + y * vid.conrowbytes + (x << 1));
+
+		while (drawline--)
+		{
+			for (u = 0; u < 8; u++)
+			{
+				if (source[u])
+				{
+					pusdest[u * 2] = d_8to16table[source[u]];
+					pusdest[u * 2 + 1] = d_8to16table[source[u]];
+				}
+			}
+			source += 128;
+			pusdest += vid.conrowbytes >> 1;
+		}
+	}
+}
+
+
+static void Draw_PicX2Internal (int x, int y, qpic_t *pic,
+	qboolean transparent, byte *translation)
+{
+	byte			*dest, *source, tbyte;
+	unsigned short	*pusdest;
+	int				v, u;
+
+	if (x < 0 || (unsigned)(x + pic->width * 2) > vid.width || y < 0 ||
+		(unsigned)(y + pic->height) > vid.height)
+	{
+		Sys_Error ("Draw_PicX2: bad coordinates");
+	}
+
+	source = pic->data;
+
+	if (r_pixbytes == 1)
+	{
+		dest = vid.buffer + y * vid.rowbytes + x;
+
+		for (v = 0; v < pic->height; v++)
+		{
+			for (u = 0; u < pic->width; u++)
+			{
+				tbyte = source[u];
+				if (!transparent || tbyte != TRANSPARENT_COLOR)
+				{
+					if (translation)
+						tbyte = translation[tbyte];
+					dest[u * 2] = tbyte;
+					dest[u * 2 + 1] = tbyte;
+				}
+			}
+			dest += vid.rowbytes;
+			source += pic->width;
+		}
+	}
+	else
+	{
+		pusdest = (unsigned short *)vid.buffer + y * (vid.rowbytes >> 1) + x;
+
+		for (v = 0; v < pic->height; v++)
+		{
+			for (u = 0; u < pic->width; u++)
+			{
+				tbyte = source[u];
+				if (!transparent || tbyte != TRANSPARENT_COLOR)
+				{
+					if (translation)
+						tbyte = translation[tbyte];
+					pusdest[u * 2] = d_8to16table[tbyte];
+					pusdest[u * 2 + 1] = d_8to16table[tbyte];
+				}
+			}
+			pusdest += vid.rowbytes >> 1;
+			source += pic->width;
+		}
+	}
+}
+
+
+void Draw_PicX2 (int x, int y, qpic_t *pic)
+{
+	Draw_PicX2Internal (x, y, pic, false, NULL);
+}
+
+
+void Draw_TransPicX2 (int x, int y, qpic_t *pic)
+{
+	Draw_PicX2Internal (x, y, pic, true, NULL);
+}
+
+
+void Draw_TransPicTranslateX2 (int x, int y, qpic_t *pic, byte *translation)
+{
+	Draw_PicX2Internal (x, y, pic, true, translation);
+}
+
+
 void Draw_CharToConback (int num, byte *dest)
 {
 	int		row, col;

@@ -111,7 +111,10 @@ Draws one solid graphics character
 */
 void M_DrawCharacter (int cx, int line, int num)
 {
-	Draw_Character ( cx + ((vid.width - 320)>>1), line, num);
+	if (vid.width >= 640)
+		Draw_CharacterX2 (cx * 2 + ((vid.width - 640) >> 1), line, num);
+	else
+		Draw_Character (cx + ((vid.width - 320) >> 1), line, num);
 }
 
 void M_Print (int cx, int cy, char *str)
@@ -136,12 +139,18 @@ void M_PrintWhite (int cx, int cy, char *str)
 
 void M_DrawTransPic (int x, int y, qpic_t *pic)
 {
-	Draw_TransPic (x + ((vid.width - 320)>>1), y, pic);
+	if (vid.width >= 640)
+		Draw_TransPicX2 (x * 2 + ((vid.width - 640) >> 1), y, pic);
+	else
+		Draw_TransPic (x + ((vid.width - 320) >> 1), y, pic);
 }
 
 void M_DrawPic (int x, int y, qpic_t *pic)
 {
-	Draw_Pic (x + ((vid.width - 320)>>1), y, pic);
+	if (vid.width >= 640)
+		Draw_PicX2 (x * 2 + ((vid.width - 640) >> 1), y, pic);
+	else
+		Draw_Pic (x + ((vid.width - 320) >> 1), y, pic);
 }
 
 byte identityTable[256];
@@ -174,7 +183,10 @@ void M_BuildTranslationTable(int top, int bottom)
 
 void M_DrawTransPicTranslate (int x, int y, qpic_t *pic)
 {
-	Draw_TransPicTranslate (x + ((vid.width - 320)>>1), y, pic, translationTable);
+	if (vid.width >= 640)
+		Draw_TransPicTranslateX2 (x * 2 + ((vid.width - 640) >> 1), y, pic, translationTable);
+	else
+		Draw_TransPicTranslate (x + ((vid.width - 320) >> 1), y, pic, translationTable);
 }
 
 

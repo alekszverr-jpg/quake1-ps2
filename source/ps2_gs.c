@@ -8,6 +8,7 @@
 
 #include <kernel.h>
 #include <dma.h>
+#include <graph.h>
 #include "ps2_gs.h"
  
 /*
@@ -51,11 +52,25 @@ DECLARE_GS_PACKET(gs_dma_buf,50);
 
 static uint16	max_x;
 static uint16	max_y;
+static uint32	frame_buffer[2];
+static uint32	frame_width;
+static uint32	frame_psm;
+static unsigned int draw_buffer;
 
 void gs_init(GS_MODE mode)
 {
 	max_x=mode.width-1;		// current resolution max coordinates
 	max_y=mode.height-1;
+	frame_width=mode.width;
+	frame_psm=mode.psm;
+
+	/*
+	 * VRAM addresses are measured in 32-bit words by the PS2SDK graph
+	 * allocator. Frame buffers must begin on a 2048-word GS page.
+	 */
+	frame_buffer[0] = 0;
+	frame_buffer[1] = (mode.width * mode.height + 2047) & ~2047;
+	draw_buffer = 1;
 
 	dma_channel_initialize(DMA_CHANNEL_GIF, NULL, 0);
 
@@ -83,7 +98,7 @@ void gs_init(GS_MODE mode)
 	);
 
 	GS_SET_DISPFB2(
-		0,				// Frame Buffer base pointer = 0 (Address/2048)
+		frame_buffer[0] >> 11,
 		mode.width/64,	// Buffer Width (Address/64)
 		mode.psm,			// Pixel Storage Format
 		0,				// Upper Left X in Buffer = 0
@@ -113,7 +128,7 @@ void gs_init(GS_MODE mode)
 
 	GIF_DATA_AD(gs_dma_buf, frame_1,
 		GS_FRAME(
-			0,					// FrameBuffer base pointer = 0 (Address/2048)
+			frame_buffer[0] >> 11,
 			mode.width/64,		// Frame buffer width (Pixels/64)
 			mode.psm,				// Pixel Storage Format
 			0));
@@ -168,9 +183,9 @@ void put_image(uint16 x, uint16 y, uint16 w, uint16 h, uint32 *data)
 	GIF_TAG_AD(gs_dma_buf, 4, 1, 0, 0, 0);
 	GIF_DATA_AD(gs_dma_buf, bitbltbuf,
 		GS_BITBLTBUF(0, 0, 0,
-			0,
+			frame_buffer[draw_buffer] >> 6,
 			(max_x+1)/64,
-			0));
+			frame_psm));
 	GIF_DATA_AD(gs_dma_buf, trxpos,
 		GS_TRXPOS(
 			0,
@@ -204,6 +219,16 @@ void put_image(uint16 x, uint16 y, uint16 w, uint16 h, uint32 *data)
 		data += current*4;
 		current = MAX_TRANSFER;
 	}
+
+	/* Present only complete frames, then upload the next frame off-screen. */
+	graph_wait_vsync();
+	GS_SET_DISPFB2(
+		frame_buffer[draw_buffer] >> 11,
+		frame_width / 64,
+		frame_psm,
+		0,
+		0);
+	draw_buffer ^= 1;
 }
 
 void fill_rect(uint16 x0, uint16 y0, uint16 x1, uint16 y1)

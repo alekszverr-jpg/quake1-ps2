@@ -7,6 +7,32 @@ and the project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-08-08
+
+### Added
+
+- Added GS double buffering so complete frames are uploaded off-screen before
+  being presented.
+- Added VSync presentation through the current PS2SDK graph API.
+
+### Changed
+
+- Horizontally scale the original 320-pixel menu graphics, text, cursors, and
+  translated player preview to the 640-pixel PS2 framebuffer.
+- Link the PS2SDK graph library required by synchronized presentation.
+
+### Fixed
+
+- Fixed the main menu and submenus appearing compressed to half width.
+- Prevented partially uploaded frames from being displayed, eliminating
+  tearing on the validated NTSC path.
+
+### Validation
+
+- Confirmed gameplay and corrected interface rendering in PCSX2.
+- Confirmed gameplay and corrected interface rendering on a real PlayStation 2.
+- PAL and 480p output remain unvalidated.
+
 ## [0.3.0] - 2026-07-29
 
 ### Added
@@ -79,7 +105,8 @@ and the project follows [Semantic Versioning](https://semver.org/).
 - Repository rules excluding Quake game data, user state, prebuilt ELF files,
   binary IOP modules, and generated build products.
 
-[Unreleased]: https://github.com/alekszverr-jpg/quake1-ps2/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/alekszverr-jpg/quake1-ps2/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/alekszverr-jpg/quake1-ps2/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/alekszverr-jpg/quake1-ps2/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/alekszverr-jpg/quake1-ps2/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/alekszverr-jpg/quake1-ps2/releases/tag/v0.1.0
