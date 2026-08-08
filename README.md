@@ -3,7 +3,7 @@
 An effort to restore, modernize, and stabilize the historical Quake port for
 the Sony PlayStation 2.
 
-Current version: **0.4.0 — Video and Frame Pacing**
+Current version: **0.4.1 — Build Reliability**
 
 The repository preserves the original 2004 port and its expanded 2009 source
 snapshot. The modernized code builds with a pinned current PS2DEV toolchain

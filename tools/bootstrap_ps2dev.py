@@ -137,10 +137,11 @@ def main() -> int:
             print(f"Using pinned PS2DEV at {ps2dev}")
             return 0
 
-    compiler = executable(ps2dev / "ee" / "bin" / "mips64r5900el-ps2-elf-gcc")
-    if not compiler.is_file():
-        download(toolchain["url"], archive, toolchain["sha256"])
-        extract_tar(archive, cache)
+    download(toolchain["url"], archive, toolchain["sha256"])
+    if ps2dev.exists():
+        print(f"Replacing outdated PS2DEV at {ps2dev}")
+        shutil.rmtree(ps2dev)
+    extract_tar(archive, cache)
 
     if platform_key == "windows":
         runtime_root = cache / "mingw-runtime"

@@ -7,6 +7,15 @@ and the project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-08-08
+
+### Fixed
+
+- Pin the PS2DEV bootstrap to the immutable `v2.0.0` release URLs and published
+  archive checksums instead of the moving `latest` release tag.
+- Reinstall the managed toolchain when its lock snapshot changes instead of
+  incorrectly marking an older cached installation as current.
+
 ## [0.4.0] - 2026-08-08
 
 ### Added
@@ -105,7 +114,8 @@ and the project follows [Semantic Versioning](https://semver.org/).
 - Repository rules excluding Quake game data, user state, prebuilt ELF files,
   binary IOP modules, and generated build products.
 
-[Unreleased]: https://github.com/alekszverr-jpg/quake1-ps2/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/alekszverr-jpg/quake1-ps2/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/alekszverr-jpg/quake1-ps2/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/alekszverr-jpg/quake1-ps2/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/alekszverr-jpg/quake1-ps2/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/alekszverr-jpg/quake1-ps2/compare/v0.1.0...v0.2.0

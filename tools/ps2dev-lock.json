@@ -1,15 +1,15 @@
 {
   "schema": 1,
-  "snapshot": "2026-07-27",
+  "snapshot": "ps2dev-v2.0.0",
   "toolchains": {
     "linux": {
-      "url": "https://github.com/ps2dev/ps2dev/releases/download/latest/ps2dev-ubuntu-latest.tar.gz",
-      "sha256": "6167c3e736f37e255a1caedac9869f91ec52a7ca656aca91b1f585c35bb11bd9",
+      "url": "https://github.com/ps2dev/ps2dev/releases/download/v2.0.0/ps2dev-ubuntu-latest.tar.gz",
+      "sha256": "c8e5dedccf62084d476894e88cd0451b57f1ed288e741eb3c1263010aaffc028",
       "archive": "ps2dev-ubuntu-latest.tar.gz"
     },
     "windows": {
-      "url": "https://github.com/ps2dev/ps2dev/releases/download/latest/ps2dev-windows-latest.tar.gz",
-      "sha256": "7065f9525204ec2bcc432573c4ce49c24c8eee926d0369bd76bf7a957d34c316",
+      "url": "https://github.com/ps2dev/ps2dev/releases/download/v2.0.0/ps2dev-windows-latest.tar.gz",
+      "sha256": "bab98ee210c62aa3bd98d9bdda2af3f92a628e6e3d63e4b52f243ae56e3eb4ce",
       "archive": "ps2dev-windows-latest.tar.gz"
     }
   },
